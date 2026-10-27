@@ -729,21 +729,27 @@ function bookRegionRect(num, i) {
  const R = pg.getBoundingClientRect(), [x, y, w, h] = pageByNum.get(num).regions[i].rect;
  return {left: R.left + R.width * x / 100, top: R.top + R.height * y / 100, width: R.width * w / 100, height: R.height * h / 100};
 }
+// parçalı etkinlikte yönerge satırı (head) parçanın üstüne şerit olarak eklenir
+const fWins = () => { const r = pageByNum.get(F.num).regions[F.i]; return r.head ? [r.head, r.rect] : [r.rect]; };
 function fLayout() {
- const reg = pageByNum.get(F.num).regions[F.i], [x, y, w, h] = reg.rect;
+ const reg = pageByNum.get(F.num).regions[F.i], [x, , w] = reg.rect, wins = fWins();
  const st = $('#focusStage').getBoundingClientRect();
- const ar = (w * RATIO) / h, maxW = st.width - 24, maxH = st.height - 24;
- const fw = Math.min(maxW, maxH * ar), fh = fw / ar;
- const frame = $('#focusFrame'), pg = frame.firstElementChild;
- Object.assign(frame.style, {width: fw + 'px', height: fh + 'px'});
- const pw = fw / (w / 100);
- Object.assign(pg.style, {width: pw + 'px', height: pw / RATIO + 'px', left: -x / 100 * pw + 'px', top: -y / 100 * (pw / RATIO) + 'px'});
+ const toplam = wins.reduce((a, r) => a + r[3], 0);
+ const ar = (w * RATIO) / toplam, maxW = st.width - 24, maxH = st.height - 24;
+ const fw = Math.min(maxW, maxH * ar);
+ const frame = $('#focusFrame'), pw = fw / (w / 100), ph = pw / RATIO;
+ frame.style.width = fw + 'px';
+ [...frame.children].forEach((win, k) => {
+  const r = wins[k];
+  win.style.height = r[3] / 100 * ph + 'px';
+  Object.assign(win.firstElementChild.style, {width: pw + 'px', height: ph + 'px', left: -x / 100 * pw + 'px', top: -r[1] / 100 * ph + 'px'});
+ });
  const c = $('#laser'), dpr = devicePixelRatio || 1;
  c.width = st.width * dpr; c.height = st.height * dpr; c.style.width = st.width + 'px'; c.style.height = st.height + 'px';
 }
 function fLabel() {
  const r = pageByNum.get(F.num).regions[F.i], k = REGIONS.findIndex(q => q.num === F.num && q.i === F.i);
- $('#fLabel').innerHTML = `${r.n ? `Etkinlik <b>${r.n}</b>` : 'Bölüm'} <small>Sayfa ${F.num}</small>`;
+ $('#fLabel').innerHTML = `${r.n ? `Etkinlik <b>${r.n}</b>` : 'Bölüm'}${r.part ? ` <span class="fpart">${r.part.replace('/', ' / ')}</span>` : ''} <small>Sayfa ${F.num}</small>`;
  $('[data-act="f-next"]').disabled = k >= REGIONS.length - 1; $('[data-act="f-prev"]').disabled = k <= 0;
 }
 function fTool(t) {
@@ -758,7 +764,13 @@ function openFocus(num, i, from) {
  F.open = true; F.num = num; F.i = i;
  const f = $('#focus'), frame = $('#focusFrame');
  f.hidden = false; f.classList.remove('closing');
- frame.innerHTML = ''; frame.append(pageEl(pageByNum.get(num), num % 2 ? 0 : 1, true));
+ frame.innerHTML = '';
+ fWins().forEach((r, k, all) => {
+  const win = document.createElement('div');
+  win.className = 'fwin' + (all.length > 1 && k === 0 ? ' fhead' : '');
+  win.append(pageEl(pageByNum.get(num), num % 2 ? 0 : 1, true));
+  frame.append(win);
+ });
  fLayout(); fLabel(); fTool(F.tool); tip.hidden = true;
  const start = from || (fresh ? bookRegionRect(num, i) : null);
  if (start) { // kitaptaki yerinden büyüyerek gelsin
@@ -826,7 +838,7 @@ function laserDraw() {
   if (e.target === stageEl && F.tool !== 'laser') return closeFocus(); // boşluğa dokununca kapanır
   try { stageEl.setPointerCapture(e.pointerId); } catch {}
   if (F.tool === 'laser') { F.hover = at(e); F.laser.push(F.hover); if (!F.raf) laserDraw(); stroke = {laser: true}; return; }
-  const pg = $('#focusFrame .pg'); if (!pg) return;
+  const pg = e.target.closest('#focusFrame .pg'); if (!pg) return;
   const p = local(e, pg);
   if (F.tool === 'eraser') { stroke = {erase: true, pg}; erase(F.num, p); return; }
   const s = {t: F.tool, c: F.color, w: F.tool === 'marker' ? 22 : 3.2, d: [p]};
