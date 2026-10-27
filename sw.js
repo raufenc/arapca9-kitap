@@ -3,7 +3,8 @@
 const CACHE = 'arapca9-kitap';
 const BASE = new URL('./', self.location).href;
 const SHELL = new Set(['index.html', 'reader.css', 'reader.js', 'book-data.js', 'activities.js', 'activity-bridge.js',
- 'activity-host.html', 'activity-host.js', 'activity-h5p.js', 'activity-h5p.css', 'manifest.webmanifest', 'offline-files.json']);
+ 'activity-host.html', 'activity-host.js', 'activity-h5p.js', 'activity-h5p.css', 'manifest.webmanifest', 'offline-files.json',
+ 'vendor/page-flip.browser.js']);
 
 self.addEventListener('install', e => e.waitUntil((async () => {
  const c = await caches.open(CACHE);

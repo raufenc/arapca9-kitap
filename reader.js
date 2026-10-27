@@ -112,7 +112,8 @@ function build(startIdx) {
  const pf = new St.PageFlip(block, {
   width: m.pw, height: m.ph, size: 'fixed', autoSize: true, usePortrait: true, showCover: false,
   startPage: startIdx, flippingTime: 780, maxShadowOpacity: .55, drawShadow: true,
-  mobileScrollSupport: false, swipeDistance: 24, disableFlipByClick: true, showPageCorners: true, clickEventForward: true
+  mobileScrollSupport: false, swipeDistance: 24, disableFlipByClick: true, showPageCorners: true, clickEventForward: true,
+  cornerSize: 44 // köşe kıvrılması yalnız gerçek köşede (kütüphane varsayılanı ~150 px etkinliklerin üstüne biniyordu)
  });
  pf.on('init', () => { refreshPageImages(); afterTurn(); });
  pf.on('flip', () => afterTurn());
