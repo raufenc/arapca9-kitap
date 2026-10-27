@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<manifest identifier="00" version="1" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+  <metadata>
+    <schema>ADL SCORM</schema>
+    <schemaversion>1.2</schemaversion>
+    <adlcp:location>metadata.xml</adlcp:location>
+  </metadata>
+  <organizations default="H5P_Yazar">
+    <organization identifier="H5P_Yazar">
+      <title>arp0904_177_e98_okudugunu_anlama_mazifiil_suruklebirak</title>
+      <item identifier="item_00" identifierref="resource_00">
+        <title>arp0904_177_e98_okudugunu_anlama_mazifiil_suruklebirak</title>
+        <adlcp:masteryscore>70</adlcp:masteryscore>
+        <metadata>
+          <schema>ADL SCORM</schema>
+          <schemaversion>1.2</schemaversion>
+          <adlcp:location>metadata.xml</adlcp:location>
+        </metadata>
+      </item>
+      <metadata>
+        <schema>ADL SCORM</schema>
+        <schemaversion>1.2</schemaversion>
+        <adlcp:location>metadata.xml</adlcp:location>
+      </metadata>
+    </organization>
+  </organizations>
+  <resources>
+    <metadata>
+      <schema>ADL SCORM</schema>
+      <schemaversion>1.2</schemaversion>
+      <adlcp:location>metadata.xml</adlcp:location>
+    </metadata>
+    <resource identifier="resource_00" type="webcontent" href="index.html" adlcp:scormtype="sco">
+      <metadata>
+        <schema>ADL SCORM</schema>
+        <schemaversion>1.2</schemaversion>
+        <adlcp:location>metadata.xml</adlcp:location>
+      </metadata>
+      <file href="audios/file-SjG8fRqVIcNt-ZLU-dmSwiAGE-4c7Ctkk7.mp3"/>
+      <file href="audios/file-SjG8fRqVIcNt-ZLU-n87LohPT.mp3"/>
+      <file href="h5p-adaptor.js"/>
+      <file href="images/file-9HtdoOHR.png"/>
+      <file href="images/file-9yTe4MGp5WqeXBmW-13snG43S.png"/>
+      <file href="images/file-nLg0dnHt.png"/>
+      <file href="images/file-Qjjxb8UAY-WE-Eg2-Jn9k97fi-8l8o2BP8.png"/>
+      <file href="images/file-qxWwRGJeidt0Ypgu-DciDOEWM-GYK6BLnj.png"/>
+      <file href="images/image-oOtKUTLW.png"/>
+      <file href="index.html"/>
+      <file href="SCORM_API_wrapper.js"/>
+    </resource>
+  </resources>
+</manifest>

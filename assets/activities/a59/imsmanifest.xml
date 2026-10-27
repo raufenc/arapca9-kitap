@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<manifest identifier="00" version="1" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+  <metadata>
+    <schema>ADL SCORM</schema>
+    <schemaversion>1.2</schemaversion>
+    <adlcp:location>metadata.xml</adlcp:location>
+  </metadata>
+  <organizations default="H5P_Yazar">
+    <organization identifier="H5P_Yazar">
+      <title>arp0902_s106_e59_muzari_fiiller_suruklebirak</title>
+      <item identifier="item_00" identifierref="resource_00">
+        <title>arp0902_s106_e59_muzari_fiiller_suruklebirak</title>
+        <adlcp:masteryscore>70</adlcp:masteryscore>
+        <metadata>
+          <schema>ADL SCORM</schema>
+          <schemaversion>1.2</schemaversion>
+          <adlcp:location>metadata.xml</adlcp:location>
+        </metadata>
+      </item>
+      <metadata>
+        <schema>ADL SCORM</schema>
+        <schemaversion>1.2</schemaversion>
+        <adlcp:location>metadata.xml</adlcp:location>
+      </metadata>
+    </organization>
+  </organizations>
+  <resources>
+    <metadata>
+      <schema>ADL SCORM</schema>
+      <schemaversion>1.2</schemaversion>
+      <adlcp:location>metadata.xml</adlcp:location>
+    </metadata>
+    <resource identifier="resource_00" type="webcontent" href="index.html" adlcp:scormtype="sco">
+      <metadata>
+        <schema>ADL SCORM</schema>
+        <schemaversion>1.2</schemaversion>
+        <adlcp:location>metadata.xml</adlcp:location>
+      </metadata>
+      <file href="audios/file-nUOZsYn-5gdUqJL_-raeM8dxM.mp3"/>
+      <file href="h5p-adaptor.js"/>
+      <file href="images/file-8U0NvioGRC-6_s3t-KcZmg7hW.png"/>
+      <file href="images/file-eFseOezdcrdzsCdd-BdfGtHej.png"/>
+      <file href="images/file-K3I4EMr7.jpg"/>
+      <file href="images/file-KAiFXX29.jpg"/>
+      <file href="images/file-MIY8sHrk1YwIuF-7-MTlBO22y-bu8EBYBU.png"/>
+      <file href="images/file-pJvrIU__Sw9tv674-kAXIERFE.png"/>
+      <file href="images/file-qgAoNY0ysNxG_mUD-9Epx9X0Y.png"/>
+      <file href="images/file-v64U6M8S.png"/>
+      <file href="images/file-vgHgtXts.png"/>
+      <file href="images/file-vo-Gxp3aozfl5yiN-LXO9eO5L.png"/>
+      <file href="images/file-_czvL94hAJRWZzkO-V5dtWDat.png"/>
+      <file href="images/image-6Cd9GK1P.jpg"/>
+      <file href="images/image-A0DhfsTh.jpg"/>
+      <file href="images/image-a5ifRWPU.jpg"/>
+      <file href="index.html"/>
+      <file href="SCORM_API_wrapper.js"/>
+    </resource>
+  </resources>
+</manifest>

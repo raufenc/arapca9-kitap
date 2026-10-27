@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<manifest identifier="00" version="1" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+  <metadata>
+    <schema>ADL SCORM</schema>
+    <schemaversion>1.2</schemaversion>
+    <adlcp:location>metadata.xml</adlcp:location>
+  </metadata>
+  <organizations default="H5P_Yazar">
+    <organization identifier="H5P_Yazar">
+      <title>arp0904_195_e112_lokantada_cumle_sirala_suruklebirak</title>
+      <item identifier="item_00" identifierref="resource_00">
+        <title>arp0904_195_e112_lokantada_cumle_sirala_suruklebirak</title>
+        <adlcp:masteryscore>70</adlcp:masteryscore>
+        <metadata>
+          <schema>ADL SCORM</schema>
+          <schemaversion>1.2</schemaversion>
+          <adlcp:location>metadata.xml</adlcp:location>
+        </metadata>
+      </item>
+      <metadata>
+        <schema>ADL SCORM</schema>
+        <schemaversion>1.2</schemaversion>
+        <adlcp:location>metadata.xml</adlcp:location>
+      </metadata>
+    </organization>
+  </organizations>
+  <resources>
+    <metadata>
+      <schema>ADL SCORM</schema>
+      <schemaversion>1.2</schemaversion>
+      <adlcp:location>metadata.xml</adlcp:location>
+    </metadata>
+    <resource identifier="resource_00" type="webcontent" href="index.html" adlcp:scormtype="sco">
+      <metadata>
+        <schema>ADL SCORM</schema>
+        <schemaversion>1.2</schemaversion>
+        <adlcp:location>metadata.xml</adlcp:location>
+      </metadata>
+      <file href="audios/file-dnFOXJLY.mp3"/>
+      <file href="h5p-adaptor.js"/>
+      <file href="images/file--L-oTOKyCyI4qa5O-wjEe2CsW.png"/>
+      <file href="images/file-eWNEbjRUot7-OJUN-v1B7Cbts.png"/>
+      <file href="images/file-fdrf3c5T.png"/>
+      <file href="images/file-GU5SITW6G5_p6icB-YvjsiEOR-4EpalnL8.png"/>
+      <file href="images/file-lTjD8jG6.png"/>
+      <file href="images/file-LtoB2LV4QrZDDWzg-xyvHFWBU-teeE7FrX.png"/>
+      <file href="images/file-PN0IvC_XKkcmhqfK-ivNR3usB-m5aGuGKx.png"/>
+      <file href="images/file-x1V2Wfhp.png"/>
+      <file href="index.html"/>
+      <file href="SCORM_API_wrapper.js"/>
+    </resource>
+  </resources>
+</manifest>

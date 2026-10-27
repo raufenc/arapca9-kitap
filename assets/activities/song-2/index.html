@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>AİHL 9. Sınıf 2. Ünite Şarkısı</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+    <div class="background-blobs" id="bgBlobs">
+        <div class="blob"></div>
+        <div class="blob"></div>
+    </div>
+    
+    <div class="app-container">
+        <header class="main-header">
+            <div class="header-section text-right">
+                <span class="badge">الصَّفُّ: ٩ - الوَحْدَةُ: ٢</span>
+            </div>
+            
+            <div class="header-section text-center">
+                <h1 class="main-title">أَنَا في المَدْرَسَة</h1>
+            </div>
+            
+            <div class="header-section text-left">
+                <button id="themeToggle" class="tool-btn theme-btn">
+                    <svg id="themeIcon" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <main class="lyrics-viewport" id="lyricsContainer">
+            <div class="lyrics-row" id="row-0"><span class="word">في كُلّ صَباح في المَدْرَسَة أَرى الأَصْدِقاء وَالمُعَلِّمَة</span></div>
+            <div class="lyrics-row" id="row-1"><span class="word">أَكْتُبُ الدَّرْس مِن السَّبّورَة وَأَقْرَأُ الكُتُب في المَكْتَبَة</span></div>
+            <div class="lyrics-row" id="row-2"><span class="word">أُصَلّي الظُّهْر في المَسْجِد وَأَلْعَبُ في الحَديقَة بِسُرور</span></div>
+            <div class="lyrics-row" id="row-3"><span class="word">وَأَعْمَلُ في المُخْتَبَر دائِمًا فَالجَهْل ظَلام وَالعِلْم نور</span></div>
+            <div class="lyrics-row" id="row-4"><span class="word">دَفاتِري وَكُتُبي وَأَقْلامي وَمُعَلِّمي هُو الأَغْلى عِنْدِي</span></div>
+            <div class="lyrics-row" id="row-5"><span class="word">مَدْرَسَتِي الأَجْمَل في عَيْني فَالْمَدْرَسَة مِفْتاح النَّجاح</span></div>
+            <div class="lyrics-row" id="row-6"><span class="word">مَدْرَسَتِي مِفْتاح النَّجاح الْمَدْرَسَة مِفْتاح النَّجاح</span></div>
+        </main>
+
+        <div class="fixed-bottom-panel">
+            <div class="equalizer-container" id="visualizer"></div>
+            <footer class="player-footer">
+                <div class="progress-section" dir="ltr">
+                    <span class="time-display" id="timeCurrent">00:00</span>
+                    <div class="progress-wrapper" id="progressContainer">
+                        <div class="progress-bar" id="progressFill"></div>
+                    </div>
+                    <span class="time-display">01:18</span>
+                </div>
+                
+                <div class="controls-section">
+                    <button class="tool-btn" id="loopBtn"><svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg></button>
+                    <button class="tool-btn" id="speedBtn">1x</button>
+                    <button class="main-play-btn" id="playBtn"><svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                    <button class="tool-btn" id="fullScreenBtn"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <audio id="audio" src="sarki.mp3" preload="auto" crossorigin="anonymous"></audio>
+    <script src="script.js"></script>
+</body>
+</html>

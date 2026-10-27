@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<manifest identifier="00" version="1" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+  <metadata>
+    <schema>ADL SCORM</schema>
+    <schemaversion>1.2</schemaversion>
+    <adlcp:location>metadata.xml</adlcp:location>
+  </metadata>
+  <organizations default="H5P_Yazar">
+    <organization identifier="H5P_Yazar">
+      <title>arp0903_s123_e66_ meslekler_gorselsec</title>
+      <item identifier="item_00" identifierref="resource_00">
+        <title>arp0903_s123_e66_ meslekler_gorselsec</title>
+        <adlcp:masteryscore>70</adlcp:masteryscore>
+        <metadata>
+          <schema>ADL SCORM</schema>
+          <schemaversion>1.2</schemaversion>
+          <adlcp:location>metadata.xml</adlcp:location>
+        </metadata>
+      </item>
+      <metadata>
+        <schema>ADL SCORM</schema>
+        <schemaversion>1.2</schemaversion>
+        <adlcp:location>metadata.xml</adlcp:location>
+      </metadata>
+    </organization>
+  </organizations>
+  <resources>
+    <metadata>
+      <schema>ADL SCORM</schema>
+      <schemaversion>1.2</schemaversion>
+      <adlcp:location>metadata.xml</adlcp:location>
+    </metadata>
+    <resource identifier="resource_00" type="webcontent" href="index.html" adlcp:scormtype="sco">
+      <metadata>
+        <schema>ADL SCORM</schema>
+        <schemaversion>1.2</schemaversion>
+        <adlcp:location>metadata.xml</adlcp:location>
+      </metadata>
+      <file href="audios/audio-9KLrZIAY.mp3"/>
+      <file href="audios/audio-aeSljAfc.mp3"/>
+      <file href="audios/audio-aSWfRs8E.mp3"/>
+      <file href="audios/audio-dx7UFpGc.mp3"/>
+      <file href="audios/audio-Es3BX1Gf.mp3"/>
+      <file href="audios/audio-T90gROGk.mp3"/>
+      <file href="audios/audio-taZNg9D5.mp3"/>
+      <file href="audios/file-rGpISgUZmVNGoKQx-4KJfmmEe.mp3"/>
+      <file href="h5p-adaptor.js"/>
+      <file href="images/file-AjQcjwOOnsfKmxBw-p0g8nP1d-e6tIhYdF.jpg"/>
+      <file href="images/file-l73JUGEV.jpg"/>
+      <file href="images/file-LNMJpMBs.png"/>
+      <file href="images/file-NF7RX-Vy67XN__1g-dblyR5Tv.png"/>
+      <file href="images/file-NfOIg4cqOruveD22-g48jfEIO.png"/>
+      <file href="images/file-tAMaxntvlzzga6Ip-xG4ALHLp-A1Sh2C89.png"/>
+      <file href="images/file-XfQ3SqPLmVtPK9Fa-hi6er4Ur-u9NaVYwT.jpg"/>
+      <file href="images/file-y5T5imay.jpg"/>
+      <file href="images/image-4s26ekU4.png"/>
+      <file href="images/image-BAJeVcGj.jpg"/>
+      <file href="images/image-DCJw481J.jpg"/>
+      <file href="images/image-iVB6Dl6k.png"/>
+      <file href="images/image-TPJTKZFe.jpg"/>
+      <file href="images/image-xL6pFAax.png"/>
+      <file href="index.html"/>
+      <file href="SCORM_API_wrapper.js"/>
+    </resource>
+  </resources>
+</manifest>

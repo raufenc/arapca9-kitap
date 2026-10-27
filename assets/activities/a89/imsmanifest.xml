@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<manifest identifier="00" version="1" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+  <metadata>
+    <schema>ADL SCORM</schema>
+    <schemaversion>1.2</schemaversion>
+    <adlcp:location>metadata.xml</adlcp:location>
+  </metadata>
+  <organizations default="H5P_Yazar">
+    <organization identifier="H5P_Yazar">
+      <title>arp0903_s156_e89_evin_nerede_gorselsec</title>
+      <item identifier="item_00" identifierref="resource_00">
+        <title>arp0903_s156_e89_evin_nerede_gorselsec</title>
+        <adlcp:masteryscore>70</adlcp:masteryscore>
+        <metadata>
+          <schema>ADL SCORM</schema>
+          <schemaversion>1.2</schemaversion>
+          <adlcp:location>metadata.xml</adlcp:location>
+        </metadata>
+      </item>
+      <metadata>
+        <schema>ADL SCORM</schema>
+        <schemaversion>1.2</schemaversion>
+        <adlcp:location>metadata.xml</adlcp:location>
+      </metadata>
+    </organization>
+  </organizations>
+  <resources>
+    <metadata>
+      <schema>ADL SCORM</schema>
+      <schemaversion>1.2</schemaversion>
+      <adlcp:location>metadata.xml</adlcp:location>
+    </metadata>
+    <resource identifier="resource_00" type="webcontent" href="index.html" adlcp:scormtype="sco">
+      <metadata>
+        <schema>ADL SCORM</schema>
+        <schemaversion>1.2</schemaversion>
+        <adlcp:location>metadata.xml</adlcp:location>
+      </metadata>
+      <file href="audios/file-RUrdXsOR.mp3"/>
+      <file href="h5p-adaptor.js"/>
+      <file href="images/file-AOd54iaQLj6GUbfZ-aOa1EloY-6IOCMDPP.png"/>
+      <file href="images/file-CT4iGiZPq0ey5HHc-wVK6DdX7.png"/>
+      <file href="images/file-EcAyEQG65ZqR2_Xs-VtUDLAju.png"/>
+      <file href="images/file-eVewsBWy.png"/>
+      <file href="images/file-JaWI7yoFkj9vQKrr-cLlwJeDt.png"/>
+      <file href="images/file-szyUFVJQq-elUutg-yDkAWmYo.png"/>
+      <file href="images/file-vBqhnPHoK2YyERGK-u2Yfgm3x-m2WE7TUL.png"/>
+      <file href="images/file-wUL4xJqJ-GWf16Yw-SJe3fl6m-J9fhwAMT.png"/>
+      <file href="images/file-Z720BHy4.png"/>
+      <file href="images/image-9HAjwugX.png"/>
+      <file href="images/image-Go6nZoFX.png"/>
+      <file href="images/image-jGdCt2ER.png"/>
+      <file href="images/image-LaNnCn96.png"/>
+      <file href="images/image-luNOtaEw.png"/>
+      <file href="images/image-ml7WKftK.jpg"/>
+      <file href="images/image-nF8oEYrw.png"/>
+      <file href="images/image-R1xaEFaG.png"/>
+      <file href="images/image-siJvES6b.png"/>
+      <file href="images/image-X6ajSetc.png"/>
+      <file href="images/image-xgorHmWR.png"/>
+      <file href="images/image-xP042S1H.png"/>
+      <file href="index.html"/>
+      <file href="SCORM_API_wrapper.js"/>
+    </resource>
+  </resources>
+</manifest>

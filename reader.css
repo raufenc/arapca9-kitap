@@ -12,7 +12,7 @@
  --gold:#e3b86c;--gold-2:#f5d9a3;--brand:#a44335;
  --panel:#101d19;--card:#16261f;--field:rgba(255,255,255,.06);
  --shadow:0 30px 80px -20px rgba(0,0,0,.65),0 12px 30px -12px rgba(0,0,0,.5);
- --k-audio:#f0a03c;--k-video:#e2534a;--k-practice:#2fa577;--k-game:#8b62d6;--k-assessment:#2d7fd3;--k-external:#5d7079;--k-document:#2d7fd3;
+ --k-audio:#f0a03c;--k-video:#e2534a;--k-practice:#2fa577;--k-game:#8b62d6;--k-assessment:#2d7fd3;--k-external:#5d7079;--k-document:#2d7fd3;--k-song:#d4558f;
  --ease:cubic-bezier(.22,.9,.24,1);
  --dock-h:64px;--top-h:60px;
  --ar:Arakom,'Geeza Pro','Noto Naskh Arabic','Traditional Arabic',serif;
@@ -127,7 +127,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke
 .hs.playing .hs-eq{display:flex}
 .hs-eq b{width:.75cqw;height:40%;background:#fff;border-radius:1cqw;animation:eq .9s ease-in-out infinite}
 .hs-eq b:nth-child(2){animation-delay:-.3s}.hs-eq b:nth-child(3){animation-delay:-.6s}
-.k-audio{--k:var(--k-audio)}.k-video{--k:var(--k-video)}.k-practice{--k:var(--k-practice)}.k-game{--k:var(--k-game)}.k-assessment{--k:var(--k-assessment)}.k-external{--k:var(--k-external)}.k-document{--k:var(--k-document)}.k-quiz{--k:var(--gold)}
+.k-audio{--k:var(--k-audio)}.k-video{--k:var(--k-video)}.k-practice{--k:var(--k-practice)}.k-game{--k:var(--k-game)}.k-assessment{--k:var(--k-assessment)}.k-external{--k:var(--k-external)}.k-document{--k:var(--k-document)}.k-quiz{--k:var(--gold)}.k-song{--k:#d4558f}
 @keyframes ping{0%{transform:scale(.9);opacity:.75}55%,100%{transform:scale(1.35);opacity:0}}
 @keyframes breathe{50%{transform:scale(1.07)}}
 @keyframes eq{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1.25)}}
@@ -213,6 +213,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke
 .ch.on{background:var(--glass-3)}
 .ch img{width:34px;aspect-ratio:1600/2257;border-radius:4px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.3);background:#fff}
 .ch span{flex:1;font-weight:600;font-size:14px}
+.ch .ch-ar{display:block;font-family:var(--ar);font-weight:400;font-size:16px;color:var(--ink-3);margin-top:1px}
 .ch small{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
 .ch .mini{display:flex;gap:3px}
 .ch .mini i{width:6px;height:6px;border-radius:50%;background:var(--k)}

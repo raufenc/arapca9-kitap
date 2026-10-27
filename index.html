@@ -4,17 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0e1c18">
-<title>Arapça 9 · Haydi Tanışalım</title>
-<meta name="description" content="Arapça 9. sınıf birinci ünite: sayfa çevirmeli etkileşimli kitap. Sesler, videolar, etkinlikler ve alıştırmalar sayfanın üstünde.">
-<meta property="og:title" content="Arapça 9 · Haydi Tanışalım">
+<title>Arapça 9 · Etkileşimli Kitap</title>
+<meta name="description" content="Arapça 9. sınıf (AİHL) ders kitabı: sayfa çevirmeli etkileşimli kitap, 4 ünite. Sesler, videolar, etkinlikler ve alıştırmalar sayfanın üstünde.">
+<meta property="og:title" content="Arapça 9 · Etkileşimli Kitap">
 <meta property="og:description" content="Sayfa çevirmeli etkileşimli kitap: sesler, videolar, etkinlikler tek yerde.">
-<meta property="og:image" content="assets/pages/010.webp">
+<meta property="og:image" content="assets/pages/000.webp">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="preload" href="assets/pages/010.webp" as="image">
-<link rel="preload" href="assets/pages/011.webp" as="image">
+
 <link rel="stylesheet" href="reader.css">
 <script defer src="book-data.js"></script>
 <script defer src="activities.js"></script>
@@ -76,6 +75,7 @@
   <symbol id="i-words" viewBox="0 0 24 24"><rect x="3.5" y="5" width="12" height="14" rx="2"/><path d="M8.5 5V3.5h12v14H15.5"/><path d="M7 10h5M7 13.5h4"/></symbol>
   <symbol id="i-save" viewBox="0 0 24 24"><path d="M12 3.5v11M7.5 10 12 14.5 16.5 10"/><path d="M4.5 15.5v2.5a2.5 2.5 0 0 0 2.5 2.5h10a2.5 2.5 0 0 0 2.5-2.5v-2.5"/></symbol>
   <symbol id="i-saved" viewBox="0 0 24 24"><path d="M4.5 15.5v2.5a2.5 2.5 0 0 0 2.5 2.5h10a2.5 2.5 0 0 0 2.5-2.5v-2.5"/><path d="m8 9 3 3 5.5-6"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></symbol>
   <symbol id="i-hand" viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5V4a1.5 1.5 0 0 1 3 0v6.5m0-4a1.5 1.5 0 0 1 3 0V12m0-3a1.5 1.5 0 0 1 3 0v5.5a7 7 0 0 1-7 7h-1a7 7 0 0 1-5.6-2.8L4 15.2a1.6 1.6 0 0 1 2.4-2.1L8 14.5"/></symbol>
  </defs>
 </svg>
@@ -83,11 +83,11 @@
 <!-- Açılış -->
 <div class="splash" id="splash" role="status" aria-live="polite">
  <div class="splash-card">
-  <div class="splash-cover"><img src="assets/thumbs/010.webp" alt=""></div>
+  <div class="splash-cover"><img src="assets/thumbs/000.webp" alt=""></div>
   <div class="splash-text">
-   <span class="splash-kicker">ARAPÇA 9 · BİRİNCİ ÜNİTE</span>
-   <strong class="splash-title">Haydi tanışalım</strong>
-   <span class="splash-ar" lang="ar" dir="rtl">هَيَّا نَتَعَارَفْ</span>
+   <span class="splash-kicker">AİHL · 9. SINIF</span>
+   <strong class="splash-title">Arapça 9</strong>
+   <span class="splash-ar" lang="ar" dir="rtl">اللُّغَةُ العَرَبِيَّةُ</span>
    <div class="splash-bar"><span id="splashFill"></span></div>
    <span class="splash-status" id="splashStatus">Kitap hazırlanıyor…</span>
   </div>
@@ -104,8 +104,8 @@
    </button>
   </div>
   <div class="top-center" id="chapterPill">
-   <span class="chap-group" id="chapGroup">BAŞLANGIÇ</span>
-   <span class="chap-title" id="chapTitle">Üniteye giriş</span>
+   <span class="chap-group" id="chapGroup">KİTAP</span>
+   <span class="chap-title" id="chapTitle">Kapak</span>
   </div>
   <div class="top-right">
    <button class="tb" data-act="panel" data-tab="search" title="Kitapta ara ( / )" aria-label="Kitapta ara"><svg><use href="#i-search"/></svg></button>
@@ -144,8 +144,8 @@
    <button class="db hide-xs" data-act="end" title="Son sayfa (End)" aria-label="Son sayfa"><svg><use href="#i-last"/></svg></button>
    <button class="db db-big" data-act="forward" title="Sonraki sayfa (←)" aria-label="Sonraki sayfa"><svg><use href="#i-left"/></svg></button>
    <label class="pageno" title="Sayfaya git">
-    <input id="pageInput" inputmode="numeric" autocomplete="off" value="10–11" aria-label="Sayfa numarası">
-    <span id="pageTotal">10–77</span>
+    <input id="pageInput" inputmode="numeric" autocomplete="off" value="Kapak" aria-label="Sayfa numarası">
+    <span id="pageTotal">1–217</span>
    </label>
    <button class="db db-big" data-act="back" title="Önceki sayfa (→)" aria-label="Önceki sayfa"><svg><use href="#i-right"/></svg></button>
    <button class="db hide-xs" data-act="start" title="İlk sayfa (Home)" aria-label="İlk sayfa"><svg><use href="#i-first"/></svg></button>

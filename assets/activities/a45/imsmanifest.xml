@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest identifier="_5mAnGximZBo" version="1.0" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+  <metadata>
+    <schema>ADL SCORM</schema>
+    <schemaversion>1.2</schemaversion>
+    <lom xmlns="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd">
+      <general>
+        <title>
+          <langstring xml:lang="x-none">arp0902_s85_e45_sinifta_cantada</langstring>
+        </title>
+      </general>
+      <lifecycle>
+        <version>
+          <langstring xml:lang="x-none">1</langstring>
+        </version>
+        <status>
+          <source>
+            <langstring xml:lang="x-none">LOMv1.0</langstring>
+          </source>
+          <value>
+            <langstring xml:lang="x-none">Final</langstring>
+          </value>
+        </status>
+      </lifecycle>
+      <metametadata>
+        <metadatascheme>ADL SCORM 1.2</metadatascheme>
+      </metametadata>
+      <educational>
+        <typicallearningtime>
+          <datetime>PT0H0M0S</datetime>
+        </typicallearningtime>
+      </educational>
+      <rights>
+        <cost>
+          <source>
+            <langstring xml:lang="x-none">LOMv1.0</langstring>
+          </source>
+          <value>
+            <langstring xml:lang="x-none">yes</langstring>
+          </value>
+        </cost>
+        <copyrightandotherrestrictions>
+          <source>
+            <langstring xml:lang="x-none">LOMv1.0</langstring>
+          </source>
+          <value>
+            <langstring xml:lang="x-none">yes</langstring>
+          </value>
+        </copyrightandotherrestrictions>
+      </rights>
+    </lom>
+  </metadata>
+  <organizations default="arp0902_s85_e45_sinifta_cantada_ORG">
+    <organization identifier="arp0902_s85_e45_sinifta_cantada_ORG">
+      <title>arp0902_s85_e45_sinifta_cantada</title>
+      <item identifier="arp0902_s85_e45_sinifta_cantada_SCO" isvisible="true" identifierref="__5mAnGximZBo_RES">
+        <title>arp0902_s85_e45_sinifta_cantada</title>
+      </item>
+    </organization>
+  </organizations>
+  <resources>
+    <resource identifier="__5mAnGximZBo_RES" type="webcontent" href="index_lms.html" adlcp:scormtype="sco">
+      <file href="story_content/thumbnail.jpg" />
+      <file href="story_content/5aKG91S1KZs_44100_128_0.mp3" />
+      <file href="story_content/6ns0D0eguiY_captions.js" />
+      <file href="mobile/5jgfvhT2PTp_REBF1DE.png" />
+      <file href="mobile/5Xh1lpEN8pw_RFFFFFF.png" />
+      <file href="story_content/6eh1PH4rgU8_44100_128_0.mp3" />
+      <file href="story_content/6V9XWrSOHhG_44100_128_0.mp3" />
+      <file href="story_content/5tmW0ZPcdgr_captions.js" />
+      <file href="mobile/6CbCm202ZHp.png" />
+      <file href="mobile/63S3HkBIY1E_P_0_0_956_480.png" />
+      <file href="story_content/6DAxcL0OHAx_44100_128_0.mp3" />
+      <file href="story_content/6S2mLCqobfg_captions.js" />
+      <file href="mobile/63S3HkBIY1E_P_0_0_959_480.png" />
+      <file href="mobile/68qoeOU54Pp.png" />
+      <file href="story_content/5wWIPivaJAF_captions.js" />
+      <file href="story_content/report.html" />
+      <file href="meta.xml" />
+      <file href="story_content/triggers.js" />
+      <file href="story_content/user.js" />
+      <file href="mobile/txt__default_6PdEPf7YcRM.png" />
+      <file href="mobile/txt__default_5gM6eAg5bOM.png" />
+      <file href="mobile/txt__default_Drag Over_5gM6eAg5bOM.png" />
+      <file href="mobile/txt__default_6mFQ8DYDagr.png" />
+      <file href="mobile/txt__default_Drag Over_6mFQ8DYDagr.png" />
+      <file href="mobile/txt__default_5hvgyQQHutk.png" />
+      <file href="mobile/txt__default_Drag Over_5hvgyQQHutk.png" />
+      <file href="mobile/txt__default_5k52mLqQnaE.png" />
+      <file href="mobile/txt__default_Drag Over_5k52mLqQnaE.png" />
+      <file href="html5/data/css/output.min.css" />
+      <file href="html5/data/js/5klgrUewSqQ.js" />
+      <file href="html5/data/js/5W42DN8uaYc.js" />
+      <file href="html5/data/js/data.js" />
+      <file href="html5/data/js/frame.js" />
+      <file href="html5/data/js/paths.js" />
+      <file href="html5/lib/scripts/bootstrapper.min.js" />
+      <file href="html5/lib/scripts/frame.desktop.min.js" />
+      <file href="html5/lib/scripts/frame.mobile.min.js" />
+      <file href="html5/lib/scripts/slides.min.js" />
+      <file href="html5/lib/stylesheets/desktop.min.css" />
+      <file href="html5/lib/stylesheets/mobile.min.css" />
+      <file href="html5/lib/stylesheets/mobile-fonts/open-sans-bold.woff" />
+      <file href="html5/lib/stylesheets/mobile-fonts/open-sans-light.woff" />
+      <file href="html5/lib/stylesheets/mobile-fonts/open-sans-regular.woff" />
+      <file href="analytics-frame.html" />
+      <file href="story.html" />
+      <file href="index_lms.html" />
+      <file href="lms/AICCComm.html" />
+      <file href="lms/blank.html" />
+      <file href="lms/browsersniff.js" />
+      <file href="lms/goodbye.html" />
+      <file href="lms/scormdriver.js" />
+    </resource>
+  </resources>
+</manifest>

@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest identifier="_6SM9G6hbvID" version="1.0" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+  <metadata>
+    <schema>ADL SCORM</schema>
+    <schemaversion>1.2</schemaversion>
+    <lom xmlns="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd">
+      <general>
+        <title>
+          <langstring xml:lang="x-none">arp0904_s189_e105_yiyecek_icecek_gorsele_gore_surukle_birak</langstring>
+        </title>
+      </general>
+      <lifecycle>
+        <version>
+          <langstring xml:lang="x-none">1</langstring>
+        </version>
+        <status>
+          <source>
+            <langstring xml:lang="x-none">LOMv1.0</langstring>
+          </source>
+          <value>
+            <langstring xml:lang="x-none">Final</langstring>
+          </value>
+        </status>
+      </lifecycle>
+      <metametadata>
+        <metadatascheme>ADL SCORM 1.2</metadatascheme>
+      </metametadata>
+      <educational>
+        <typicallearningtime>
+          <datetime>PT0H0M0S</datetime>
+        </typicallearningtime>
+      </educational>
+      <rights>
+        <cost>
+          <source>
+            <langstring xml:lang="x-none">LOMv1.0</langstring>
+          </source>
+          <value>
+            <langstring xml:lang="x-none">yes</langstring>
+          </value>
+        </cost>
+        <copyrightandotherrestrictions>
+          <source>
+            <langstring xml:lang="x-none">LOMv1.0</langstring>
+          </source>
+          <value>
+            <langstring xml:lang="x-none">yes</langstring>
+          </value>
+        </copyrightandotherrestrictions>
+      </rights>
+    </lom>
+  </metadata>
+  <organizations default="arp0904_s189_e105_yiyecek_icecek_gorsele_gore_surukle_birak_ORG">
+    <organization identifier="arp0904_s189_e105_yiyecek_icecek_gorsele_gore_surukle_birak_ORG">
+      <title>arp0904_s189_e105_yiyecek_icecek_gorsele_gore_surukle_birak</title>
+      <item identifier="arp0904_s189_e105_yiyecek_icecek_gorsele_gore_surukle_birak_SCO" isvisible="true" identifierref="__6SM9G6hbvID_RES">
+        <title>arp0904_s189_e105_yiyecek_icecek_gorsele_gore_surukle_birak</title>
+      </item>
+    </organization>
+  </organizations>
+  <resources>
+    <resource identifier="__6SM9G6hbvID_RES" type="webcontent" href="index_lms.html" adlcp:scormtype="sco">
+      <file href="story_content/thumbnail.jpg" />
+      <file href="story_content/5oWHNTCYVLW_44100_128_0.mp3" />
+      <file href="story_content/6V12FcpHWtF_captions.js" />
+      <file href="mobile/66QkF8lIVbx_P_138_43_1772_1020.png" />
+      <file href="mobile/6CJJuFknwlP.png" />
+      <file href="mobile/67hvFCbynwy_P_0_0_1529_1327.png" />
+      <file href="mobile/6VQ0UnPNasL.png" />
+      <file href="mobile/6qiGLtp8UUm.png" />
+      <file href="mobile/5xXoTLSzjgZ_X.png" />
+      <file href="mobile/64JdZNSBQTc_X.png" />
+      <file href="mobile/5zfVvHZQei4_X.png" />
+      <file href="mobile/5reLkTKIyFW_X.png" />
+      <file href="mobile/5p0O2pvxcIX_X.png" />
+      <file href="story_content/5l1RtMD7obV_44100_128_0.mp3" />
+      <file href="story_content/6V9XWrSOHhG_44100_128_0.mp3" />
+      <file href="story_content/6ChqnNk84Ao_captions.js" />
+      <file href="mobile/5apawuvt4sm.png" />
+      <file href="mobile/6SwGUygz6f9_P_0_0_955_480.png" />
+      <file href="story_content/6DAxcL0OHAx_44100_128_0.mp3" />
+      <file href="story_content/6laxlchbIa0_captions.js" />
+      <file href="mobile/6ky5cyvixW6_P_0_0_955_480.png" />
+      <file href="mobile/5kEXDg8pznz.png" />
+      <file href="story_content/6VfkaZDYyM2_captions.js" />
+      <file href="story_content/report.html" />
+      <file href="meta.xml" />
+      <file href="story_content/triggers.js" />
+      <file href="story_content/user.js" />
+      <file href="mobile/txt__default_6lMxouNbGNl.png" />
+      <file href="html5/data/css/output.min.css" />
+      <file href="html5/data/js/64NRH55Xcwl.js" />
+      <file href="html5/data/js/6GTTYadnUOL.js" />
+      <file href="html5/data/js/data.js" />
+      <file href="html5/data/js/frame.js" />
+      <file href="html5/data/js/paths.js" />
+      <file href="html5/lib/scripts/bootstrapper.min.js" />
+      <file href="html5/lib/scripts/frame.desktop.min.js" />
+      <file href="html5/lib/scripts/frame.mobile.min.js" />
+      <file href="html5/lib/scripts/slides.min.js" />
+      <file href="html5/lib/stylesheets/desktop.min.css" />
+      <file href="html5/lib/stylesheets/mobile.min.css" />
+      <file href="html5/lib/stylesheets/mobile-fonts/open-sans-bold.woff" />
+      <file href="html5/lib/stylesheets/mobile-fonts/open-sans-light.woff" />
+      <file href="html5/lib/stylesheets/mobile-fonts/open-sans-regular.woff" />
+      <file href="analytics-frame.html" />
+      <file href="story.html" />
+      <file href="index_lms.html" />
+      <file href="lms/AICCComm.html" />
+      <file href="lms/blank.html" />
+      <file href="lms/browsersniff.js" />
+      <file href="lms/goodbye.html" />
+      <file href="lms/scormdriver.js" />
+    </resource>
+  </resources>
+</manifest>

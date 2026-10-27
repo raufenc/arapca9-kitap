@@ -12,6 +12,8 @@ const icon = (id, cls = '') => `<svg class="${cls}"><use href="#${id}"/></svg>`;
 const hasAr = s => /[؀-ۿ]/.test(s);
 
 const FIRST = B.firstPage, LAST = B.lastPage, N = B.pages.length;
+const CHAPTERS = B.chapters || C.chapters || [{page: FIRST, title: B.unitTitle, group: 'KİTAP'}];
+const pl = n => n === 0 ? 'Kapak' : String(n); // sayfa adı
 const RATIO = 1600 / 2257, INK_H = Math.round(1000 / RATIO);
 const idxOf = num => LAST - num, numOf = idx => LAST - idx;
 const pageByNum = new Map(B.pages.map(p => [p.number, p]));
@@ -26,7 +28,7 @@ const KIND = {
  audio: {name: 'Dinleme', icon: 'i-audio'}, video: {name: 'Video', icon: 'i-video'},
  practice: {name: 'Etkinlik', icon: 'i-practice'}, game: {name: 'Oyun', icon: 'i-game'},
  assessment: {name: 'Değerlendirme', icon: 'i-assessment'}, external: {name: 'Bağlantı', icon: 'i-external'},
- document: {name: 'Belge', icon: 'i-doc'}, quiz: {name: 'Alıştırma', icon: 'i-spark'}
+ document: {name: 'Belge', icon: 'i-doc'}, quiz: {name: 'Alıştırma', icon: 'i-spark'}, song: {name: 'Şarkı', icon: 'i-music'}
 };
 const kindOf = r => KIND[r.kind] ? r.kind : 'external';
 const activityOf = r => actByRes.get(r.id) || (r.activity && actById.get(r.activity)) || null;
@@ -136,7 +138,7 @@ function afterTurn() {
  S.visible = idx.map(numOf).sort((a, b) => a - b);
  hydrate(idx[0]);
  const lo = S.visible[0], hi = S.visible[S.visible.length - 1];
- const label = lo === hi ? String(lo) : `${lo}–${hi}`;
+ const label = lo === hi ? pl(lo) : `${pl(lo)}–${hi}`;
  if (document.activeElement !== $('#pageInput')) $('#pageInput').value = label;
  const range = $('#scrubRange'); range.value = lo; paintRange(range);
  $$('[data-act="forward"]').forEach(b => b.disabled = hi >= LAST);
@@ -159,10 +161,10 @@ function updateEdges() {
  $('#edgeLeft').style.width = Math.round((1 - f) * max) + 'px';
 }
 function chapterAt(num) {
- const list = C.chapters || [{page: FIRST, title: B.unitTitle, group: 'ÜNİTE'}];
+ const list = CHAPTERS;
  let cur = list[0], group = list[0].group || '';
  for (const c of list) { if (c.page > num) break; cur = c; if (c.group) group = c.group; }
- return {...cur, groupLabel: group.replace(/^\d+\s*·\s*/, '')};
+ return {...cur, groupLabel: group.split(' · ')[0]};
 }
 
 /* ——— gezinme ——— */
@@ -433,8 +435,8 @@ function openPractice(num) {
 }
 function openUnitQuiz() {
  const qs = (C.quiz || []).map((q, i) => ({...q, id: q.id || 'u' + i}));
- openQuiz(qs, {title: 'Ünite değerlendirmesi', kicker: `${qs.length} soru · Birinci ünite`, onDone: ({right, total}) => {
-  store.set('unitQuiz', {right, total, t: Date.now()}); toast(`Ünite değerlendirmesi: ${right}/${total} doğru`);
+ openQuiz(qs, {title: '1. ünite değerlendirmesi', kicker: `${qs.length} soru · Haydi tanışalım`, onDone: ({right, total}) => {
+  store.set('unitQuiz', {right, total, t: Date.now()}); toast(`1. ünite değerlendirmesi: ${right}/${total} doğru`);
  }});
 }
 
@@ -458,14 +460,14 @@ function renderPanel() {
 function panelToc() {
  const pct = Math.round(S.seen.size / N * 100), uq = store.get('unitQuiz', null);
  const doneActs = Object.values(S.acts).filter(a => a.complete).length;
- let h = `<div class="p-hero"><small>BİRİNCİ ÜNİTE</small><span class="ar">${esc(B.unitArabic)}</span><b>${esc(B.unitTitle)}</b>
-  <div class="meta">${N} sayfa · ${B.stats.audio} ses · ${B.stats.video} video · ${B.activities.length} etkinlik</div>
+ let h = `<div class="p-hero"><small>AİHL · 9. SINIF</small><span class="ar">${esc(B.unitArabic)}</span><b>${esc(B.title)}</b>
+  <div class="meta">${(B.units || []).length || 1} ünite · ${N} sayfa · ${B.stats.audio} ses · ${B.stats.video} video · ${B.activities.length} etkinlik</div>
   <div class="prog"><i style="width:${pct}%"></i></div><div class="meta">Gezilen sayfalar %${pct} · Tamamlanan etkinlik ${doneActs}/${B.activities.length}</div></div>
-  <button class="row k-quiz" data-act="unit-quiz"><span class="ic">${icon('i-spark')}</span><span class="tx"><b>Ünite değerlendirmesi</b><small>${(C.quiz || []).length} soruluk kısa test${uq ? ` · son: ${uq.right}/${uq.total}` : ''}</small></span></button>`;
+  <button class="row k-quiz" data-act="unit-quiz"><span class="ic">${icon('i-spark')}</span><span class="tx"><b>1. ünite değerlendirmesi</b><small>${(C.quiz || []).length} soruluk kısa test${uq ? ` · son: ${uq.right}/${uq.total}` : ''}</small></span></button>`;
  const cur = chapterAt(S.visible[0]).page;
- (C.chapters || []).forEach(c => {
+ CHAPTERS.forEach(c => {
   if (c.group) h += `<div class="grp">${esc(c.group)}</div>`;
-  h += `<button class="ch${c.page === cur ? ' on' : ''}" data-act="goto" data-page="${c.page}"><img src="${pageByNum.get(c.page).thumb}" alt="" loading="lazy"><span>${esc(c.title)}</span><small>${c.page}</small></button>`;
+  h += `<button class="ch${c.page === cur ? ' on' : ''}" data-act="goto" data-page="${c.page}"><img src="${pageByNum.get(c.page).thumb}" alt="" loading="lazy"><span>${esc(c.title)}${c.arabic ? ` <bdi lang="ar" class="ch-ar">${esc(c.arabic)}</bdi>` : ''}</span><small>${pl(c.page)}</small></button>`;
  });
  return h;
 }
@@ -473,7 +475,7 @@ function panelPages() {
  let h = '<div class="thumbs">';
  for (let n = FIRST; n <= LAST; n += 2) {
   const pair = [n, n + 1].filter(x => x <= LAST), on = pair.some(x => S.visible.includes(x));
-  h += `<button class="th${on ? ' on' : ''}" data-act="goto" data-page="${n}"><span class="pair">${pair.map(x => `<span class="vis${S.seen.has(x) ? ' seen' : ''}"><img src="${pageByNum.get(x).thumb}" alt="Sayfa ${x}" loading="lazy"></span>`).join('')}</span><small>${pair.join('–')}</small></button>`;
+  h += `<button class="th${on ? ' on' : ''}" data-act="goto" data-page="${n}"><span class="pair">${pair.map(x => `<span class="vis${S.seen.has(x) ? ' seen' : ''}"><img src="${pageByNum.get(x).thumb}" alt="Sayfa ${x}" loading="lazy"></span>`).join('')}</span><small>${pair.map(pl).join('–')}</small></button>`;
  }
  return h + '</div>';
 }
@@ -536,7 +538,7 @@ function searchHTML(q) {
  const t = normTr(q);
  if (t) {
   const mark = s => { const i = normTr(s).indexOf(t); return i < 0 ? esc(s) : esc(s.slice(0, i)) + '<mark>' + esc(s.slice(i, i + q.length)) + '</mark>' + esc(s.slice(i + q.length)); };
-  (C.chapters || []).filter(c => normTr(c.title).includes(t)).forEach(c => { hits++; h += `<button class="hit" data-act="goto" data-page="${c.page}"><b>Bölüm · Sayfa ${c.page}</b><p>${mark(c.title)}</p></button>`; });
+  CHAPTERS.filter(c => normTr(c.title).includes(t) || (c.arabic && hasAr(q) && skel(c.arabic).includes(skel(q)))).forEach(c => { hits++; h += `<button class="hit" data-act="goto" data-page="${c.page}"><b>Bölüm · Sayfa ${c.page}</b><p>${mark(c.title)}</p></button>`; });
   B.resources.filter(r => normTr(r.title).includes(t) || normAr(cleanLabel(r.label)).includes(normAr(q))).forEach(r => { hits++; h += `<button class="hit" data-act="media-open" data-res="${r.id}"><b>${KIND[kindOf(r)].name} · Sayfa ${r.page}</b><p>${mark(r.title)}</p></button>`; });
   Object.values(C.practice || {}).filter(p => normTr(p.title).includes(t)).forEach(p => { hits++; h += `<button class="hit" data-act="practice" data-page="${p.page}"><b>Alıştırma · Sayfa ${p.page}</b><p>${mark(p.title)}</p></button>`; });
   (C.vocabulary || []).filter(([ar, tr]) => normTr(tr).includes(t) || (hasAr(q) && skel(ar).includes(skel(q)))).forEach(([ar, tr]) => { hits++; h += `<div class="hit"><b>Kelime</b><p><span lang="ar" style="font-size:19px">${esc(ar)}</span> · ${mark(tr)}</p></div>`; });
@@ -578,7 +580,7 @@ function lensOpen(tool = 'hand') {
 function lensBuild() {
  const sheet = $('#lensSheet'); sheet.innerHTML = '';
  S.visible.forEach(n => { const el = pageEl(pageByNum.get(n), S.visible.length > 1 ? (n % 2 ? 0 : 1) : 1, true); sheet.append(el); });
- $('#lensPage').textContent = 'Sayfa ' + (S.visible.length > 1 ? S.visible.join('–') : S.visible[0]);
+ $('#lensPage').textContent = S.visible.map(pl).join('–');
  lensFit();
 }
 function lensFit() {
@@ -735,12 +737,12 @@ range.addEventListener('input', () => {
  paintRange(range);
  const pv = $('#scrubPreview'), n = +range.value, f = (n - FIRST) / (LAST - FIRST), w = range.getBoundingClientRect().width;
  pv.style.left = (w - 6 - f * (w - 12)) + 'px';
- pv.querySelector('img').src = pageByNum.get(n).thumb; pv.querySelector('span').textContent = `Sayfa ${n} · ${chapterAt(n).title}`;
+ pv.querySelector('img').src = pageByNum.get(n).thumb; pv.querySelector('span').textContent = `${n ? 'Sayfa ' + n : 'Kapak'} · ${chapterAt(n).title}`;
  pv.classList.add('on');
 });
 range.addEventListener('change', () => { $('#scrubPreview').classList.remove('on'); go.to(+range.value); });
 range.addEventListener('pointerup', () => $('#scrubPreview').classList.remove('on'));
-$('#scrubMarks').innerHTML = (C.chapters || []).map(c => `<i class="${c.group ? 'cm' : ''}" style="right:${(c.page - FIRST) / (LAST - FIRST) * 100}%"></i>`).join('');
+$('#scrubMarks').innerHTML = CHAPTERS.map(c => `<i class="${c.group ? 'cm' : ''}" style="right:${(c.page - FIRST) / (LAST - FIRST) * 100}%"></i>`).join('');
 
 /* sayfa numarası alanı */
 const pin = $('#pageInput');
@@ -750,7 +752,7 @@ pin.addEventListener('keydown', e => {
  if (e.key === 'Enter') { const n = parseInt(pin.value, 10); if (n) go.to(n); pin.blur(); }
  if (e.key === 'Escape') pin.blur();
 });
-function afterTurnLabel() { const lo = S.visible[0], hi = S.visible.at(-1); pin.value = lo === hi ? lo : `${lo}–${hi}`; }
+function afterTurnLabel() { const lo = S.visible[0], hi = S.visible.at(-1); pin.value = lo === hi ? pl(lo) : `${pl(lo)}–${hi}`; }
 
 /* ——— eylemler ——— */
 const THEMES = ['gece', 'gunduz', 'deniz'], THEME_NAMES = {gece: 'Gece', gunduz: 'Gündüz', deniz: 'Deniz'};
