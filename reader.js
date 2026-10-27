@@ -148,7 +148,7 @@ function afterTurn() {
  $('#chapGroup').textContent = ch.groupLabel; $('#chapTitle').textContent = ch.title;
  document.title = `${ch.title} · Sayfa ${label} · Arapça 9`;
  $('#bookmarkBtn').setAttribute('aria-pressed', S.marks.has(lo));
- renderPageActions(); updateEdges();
+ renderPageActions(); updateEdges(); warmVisible();
  if (S.tab && $('#panel').classList.contains('open') && (S.tab === 'toc' || S.tab === 'pages' || S.tab === 'notes')) renderPanel();
  if (S.auto && hi >= LAST) toggleAuto(false);
 }
@@ -771,7 +771,7 @@ const ACT = {
  'panel-close': closePanel,
  bookmark: toggleMark,
  theme: () => { S.theme = THEMES[(THEMES.indexOf(S.theme) + 1) % THEMES.length]; store.set('theme', S.theme); applyTheme(); toast(`Arka plan: ${THEME_NAMES[S.theme]}`); },
- help: openHelp,
+ help: openHelp, offline: openOffline,
  zoom: () => lensOpen('hand'), draw: () => lensOpen('pen'),
  hotspots: () => { S.hot = !S.hot; store.set('hot', S.hot); applyHot(); toast(S.hot ? 'Etkileşim düğmeleri görünüyor' : 'Etkileşim düğmeleri gizlendi · sayfa yalın'); },
  auto: () => toggleAuto(),
@@ -877,6 +877,130 @@ function openHelp() {
   <div><h3>Akıllı tahtada</h3><ul><li>Çift dokun: sayfayı büyüt</li><li>Kalemle sayfanın üstüne yaz; çizimler kaydedilir</li><li>Tam ekranda araçlar kendiliğinden gizlenir</li><li>Notlar, ayraçlar ve puanlar bu cihazda saklanır</li></ul></div>
  </div>`});
 }
+
+/* ——— önbellek, ön yükleme ve çevrimdışı kayıt ——— */
+const CACHE = 'arapca9-kitap';
+const canCache = 'caches' in window && location.protocol.startsWith('http');
+if ('serviceWorker' in navigator && canCache) navigator.serviceWorker.register('sw.js').catch(() => {});
+let listP = null;
+const fileList = () => listP ||= fetch('offline-files.json', {cache: 'no-cache'}).then(r => r.json()).catch(() => null);
+const absKey = p => new URL(p, location.href).href.split(/[?#]/)[0];
+const lowData = () => navigator.connection?.saveData || /2g/.test(navigator.connection?.effectiveType || '');
+
+/* açık sayfanın etkinliklerini boşta indirip ısıt: tıklanınca önbellekten açılır */
+const warmed = new Set();
+async function warm(paths) {
+ if (lowData()) return;
+ for (const p of paths) {
+  if (warmed.has(p)) continue; warmed.add(p);
+  await new Promise(r => (window.requestIdleCallback || setTimeout)(r, {timeout: 1500}));
+  try { await (await fetch(p)).arrayBuffer(); } catch {}
+ }
+}
+let warmT;
+function warmVisible() {
+ clearTimeout(warmT);
+ warmT = setTimeout(async () => {
+  const list = await fileList(); if (!list) return;
+  const ids = S.visible.flatMap(n => (resByPage.get(n) || []).map(activityOf).filter(Boolean).map(a => a.id));
+  warm([...list.shared, ...ids.flatMap(id => list.boot[id] || [])]);
+ }, 1200);
+}
+
+/* çevrimdışı kayıt penceresi */
+const OFF = {running: false, stop: false, prompt: null};
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); OFF.prompt = e; });
+const mb = b => (b / 1048576).toLocaleString('tr-TR', {maximumFractionDigits: b < 10485760 ? 1 : 0}) + ' MB';
+async function offlineState() {
+ const list = await fileList();
+ if (!list || !canCache) return {list, have: new Set()};
+ const c = await caches.open(CACHE);
+ return {list, have: new Set((await c.keys()).map(r => r.url))};
+}
+function markOffline(done) {
+ $('#offlineBtn').setAttribute('aria-pressed', !!done);
+ $('#offlineBtn use').setAttribute('href', done ? '#i-saved' : '#i-save');
+ $('#offlineBtn').title = done ? 'Kitap bu cihazda kayıtlı · internetsiz açılır' : 'Çevrimdışı kaydet: internetsiz kullan';
+}
+async function openOffline() {
+ const box = document.createElement('div'); box.className = 'offline';
+ openModal({kind: 'document', kicker: 'Çevrimdışı kullanım', title: 'Kitabı bu cihaza kaydet', body: box, narrow: true});
+ if (!canCache) { box.innerHTML = `<p class="off-lead">Bu kopya bir dosyadan açılmış. Çevrimdışı kayıt için kitabı internet adresinden aç.</p>`; return; }
+ box.innerHTML = `<div class="empty"><div class="spin"></div>Hesaplanıyor…</div>`;
+ const {list, have} = await offlineState();
+ if (!list) { box.innerHTML = `<p class="off-lead">Dosya listesi alınamadı. İnternet bağlantısını kontrol edip yeniden dene.</p>`; return; }
+ const missing = list.files.filter(([p]) => !have.has(absKey(p)));
+ const haveBytes = list.total - missing.reduce((s, [, b]) => s + b, 0);
+ const est = await navigator.storage?.estimate?.().catch(() => null);
+ const free = est ? est.quota - est.usage : null;
+ const done = !missing.length;
+ box.innerHTML = `
+  <p class="off-lead">${done ? 'Kitabın tamamı bu cihazda kayıtlı. İnternet olmadan da açılır; sesler, videolar ve etkinlikler dahil.' : 'Bir kez kaydet, sonra internet olmadan da aç. Akıllı tahtada, dizüstünde ya da tablette bir kerelik iş.'}</p>
+  <div class="off-stats">
+   <div><b>${mb(list.total)}</b><small>Kitabın tamamı</small></div>
+   <div><b>${mb(haveBytes)}</b><small>Bu cihazda</small></div>
+   <div><b>${list.files.length.toLocaleString('tr-TR')}</b><small>Dosya</small></div>
+  </div>
+  <div class="off-bar"><i style="width:${haveBytes / list.total * 100}%"></i></div>
+  <div class="off-status" id="offStatus">${done ? '✓ Hazır' : `${mb(list.total - haveBytes)} indirilecek${free != null && free < list.total - haveBytes ? ' · <span class="warn">cihazda yer az görünüyor</span>' : ''}`}</div>
+  <div class="off-actions">
+   ${done ? `<button class="btn ghost" data-off="clear">${icon('i-trash')}<span>Kayıtlı kopyayı sil</span></button>` : `<button class="btn" data-off="start">${icon('i-save')}<span>${haveBytes ? 'Kaydetmeye devam et' : 'Kitabı kaydet'}</span></button>`}
+   ${OFF.prompt ? `<button class="btn ghost" data-off="install">${icon('i-expand')}<span>Uygulama olarak ekle</span></button>` : ''}
+  </div>
+  <ul class="off-notes">
+   <li>Kayıt sürerken kitabı kullanmaya devam edebilirsin; pencereyi kapatırsan kayıt durur, sonra kaldığı yerden sürer.</li>
+   <li>Chrome ya da Edge'de adres çubuğundaki “yükle” simgesiyle kitabı masaüstüne ve tahtanın ana ekranına uygulama olarak ekleyebilirsin.</li>
+   <li>Notlar, ayraçlar, çizimler ve puanlar yalnızca bu cihazda saklanır.</li>
+  </ul>`;
+ box.onclick = async e => {
+  const b = e.target.closest('[data-off]'); if (!b) return;
+  if (b.dataset.off === 'start') runOffline(list, missing, haveBytes, box);
+  if (b.dataset.off === 'stop') OFF.stop = true;
+  if (b.dataset.off === 'install') { OFF.prompt.prompt(); OFF.prompt = null; }
+  if (b.dataset.off === 'clear') { await caches.delete(CACHE); markOffline(false); store.set('offline', null); toast('Kayıtlı kopya silindi'); openOffline(); }
+ };
+ if (OFF.running) box.querySelector('[data-off="start"]')?.replaceWith(Object.assign(document.createElement('span'), {className: 'off-status', textContent: 'Kayıt sürüyor…'}));
+}
+async function runOffline(list, missing, haveBytes, box) {
+ if (OFF.running) return;
+ OFF.running = true; OFF.stop = false;
+ navigator.storage?.persist?.().catch(() => {});
+ const c = await caches.open(CACHE);
+ const actions = box.querySelector('.off-actions');
+ actions.innerHTML = `<button class="btn ghost" data-off="stop">Durdur</button>`;
+ let got = haveBytes, n = 0, fail = 0, i = 0;
+ const paint = () => {
+  if (!box.isConnected) return;
+  box.querySelector('.off-bar i').style.width = got / list.total * 100 + '%';
+  box.querySelector('#offStatus').textContent = `${mb(got)} / ${mb(list.total)} · ${n.toLocaleString('tr-TR')} / ${missing.length.toLocaleString('tr-TR')} dosya`;
+ };
+ await Promise.all(Array.from({length: 6}, async () => {
+  while (i < missing.length && !OFF.stop && !$('#modal').hidden) {
+   const [p, size] = missing[i++];
+   try {
+    const r = await fetch(p, {headers: {'x-a9-save': '1'}, cache: 'no-cache'});
+    if (!r.ok) throw 0;
+    await c.put(absKey(p), r);
+    got += size;
+   } catch { fail++; }
+   n++; paint();
+  }
+ }));
+ OFF.running = false;
+ const complete = !fail && n === missing.length;
+ if (complete) { store.set('offline', {version: list.version, t: Date.now()}); markOffline(true); toast('Kitap kaydedildi · artık internetsiz açılır'); }
+ else if (fail) toast(`${fail} dosya indirilemedi. Yeniden deneyince kalanlar iner.`);
+ if (box.isConnected) openOffline();
+}
+(async () => {
+ const saved = store.get('offline', null); if (!saved) return;
+ markOffline(true);
+ const list = await fileList();
+ if (list && list.version !== saved.version) {
+  markOffline(false);
+  toast('Kitabın yeni sürümü var', {label: 'Güncelle', fn: openOffline}, 6000);
+ }
+})();
 
 /* ——— açılış ——— */
 function start() {
