@@ -8,7 +8,7 @@ import hashlib, json, pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SKIP_DIRS = {'.git', 'araclar', '.claude'}
 SKIP_FILES = {'.DS_Store', '.nojekyll', 'README.md', 'sw.js', 'offline-files.json'}
-SHELL = ['index.html', 'reader.css', 'reader.js', 'book-data.js', 'activities.js', 'activity-bridge.js', 'vendor/page-flip.browser.js',
+SHELL = ['index.html', 'reader.css', 'reader.js', 'book-data.js', 'activities.js', 'activity-bridge.js',
          'activity-host.html', 'activity-host.js', 'activity-h5p.js', 'activity-h5p.css',
          'vendor/page-flip.browser.js', 'manifest.webmanifest']
 
