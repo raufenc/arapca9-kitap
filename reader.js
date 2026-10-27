@@ -57,11 +57,16 @@ function hotspotHTML(num) {
   return `<button class="hs k-${k}" data-res="${r.id}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%" aria-label="${esc(r.title)}">${icon(KIND[k].icon)}${k === 'audio' ? '<span class="hs-eq"><b></b><b></b><b></b></span>' : ''}${done ? `<span class="hs-done">${icon('i-check')}</span>` : ''}</button>`;
  }).join('');
 }
+// numaralı etkinliklerin sınırları: dokununca etkinlik ekranı kaplar
+const regionHTML = p => (p.regions || []).map((r, i) => {
+ const [x, y, w, h] = r.rect;
+ return `<div class="ex" data-ex="${i}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"><span class="ex-tag">${icon('i-focus')}${r.n ? `<b>${r.n}</b>` : ''}</span></div>`;
+}).join('');
 function pageEl(p, i, full) {
  const el = document.createElement('div');
  el.className = 'pg ' + (i % 2 ? 'is-right' : 'is-left') + (S.marks.has(p.number) ? ' marked' : '');
  el.dataset.num = p.number; el.dataset.density = 'soft';
- el.innerHTML = `<div class="pg-ph" style="background-image:url('${p.thumb}')"></div><img class="pg-img${full ? ' on' : ''}" alt="Sayfa ${p.number}" draggable="false"${full ? ` src="${p.image}"` : ''}><svg class="pg-ink" viewBox="0 0 1000 ${INK_H}" preserveAspectRatio="none">${inkSVG(p.number)}</svg><div class="pg-hot">${hotspotHTML(p.number)}</div><div class="pg-gutter"></div><span class="pg-ribbon"></span>`;
+ el.innerHTML = `<div class="pg-ph" style="background-image:url('${p.thumb}')"></div><img class="pg-img${full ? ' on' : ''}" alt="Sayfa ${p.number}" draggable="false"${full ? ` src="${p.image}"` : ''}><svg class="pg-ink" viewBox="0 0 1000 ${INK_H}" preserveAspectRatio="none">${inkSVG(p.number)}</svg><div class="pg-ex">${regionHTML(p)}</div><div class="pg-hot">${hotspotHTML(p.number)}</div><div class="pg-gutter"></div><span class="pg-ribbon"></span>`;
  return el;
 }
 const loaded = new Set();
@@ -80,8 +85,9 @@ function refreshPageImages() { // kütüphane yeniden kurulunca yüklü görsell
 
 /* ——— yerleşim ve kitap ——— */
 function measure() {
- const r = stage.getBoundingClientRect(), small = innerWidth < 760;
- const padX = small ? 10 : 100, padTop = small ? 46 : 54, padBot = small ? 10 : 22;
+ const r = stage.getBoundingClientRect(), small = innerWidth < 760, fs = app.classList.contains('fs');
+ // tam ekranda çubuklar kitabın üstünde yüzer: kitap bütün ekranı kullanır
+ const padX = fs ? 6 : small ? 10 : 100, padTop = fs ? 6 : small ? 46 : 54, padBot = fs ? 6 : small ? 10 : 22;
  const aw = r.width - padX * 2, ah = r.height - padTop - padBot;
  const single = S.view === 'single' || (S.view === 'auto' && aw / ah < RATIO * 1.32);
  let ph = ah, pw = ph * RATIO; const cols = single ? 1 : 2;
@@ -122,10 +128,15 @@ function build(startIdx) {
 }
 let resizeT;
 addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => build(), 160); });
-document.addEventListener('fullscreenchange', () => {
+const standalone = matchMedia('(display-mode: fullscreen), (display-mode: standalone)');
+function applyFs() {
+ const fs = !!document.fullscreenElement || standalone.matches;
+ app.classList.toggle('fs', fs);
  $('#fsBtn use').setAttribute('href', document.fullscreenElement ? '#i-shrink' : '#i-expand');
- setTimeout(() => build(), 120);
-});
+}
+document.addEventListener('fullscreenchange', () => { applyFs(); setTimeout(() => build(), 120); });
+standalone.addEventListener?.('change', () => { applyFs(); build(); });
+applyFs();
 
 function visibleIdx() {
  const i = S.pf.getCurrentPageIndex();
@@ -708,6 +719,154 @@ function inkClear() {
  toast('Bu sayfadaki çizimler silindi', {label: 'Geri al', fn: () => { while (L.undo.at(-1)?.type === 'del') inkUndo(); }});
 }
 
+/* ——— etkinlik odağı: bölge ekranı kaplar, kalem + lazer ——— */
+const REGIONS = B.pages.flatMap(p => (p.regions || []).map((r, i) => ({num: p.number, i, r})));
+const F = {open: false, num: 0, i: 0, tool: store.get('ftool', 'pen'), color: '#e2534a', undo: [], laser: [], hover: null, raf: 0};
+$('#fSwatches').innerHTML = COLORS.map(c => `<button class="sw" style="--c:${c}" data-act="fcolor" data-c="${c}" aria-label="Renk"></button>`).join('');
+function bookRegionRect(num, i) {
+ const pg = $$(`#bookHost .pg[data-num="${num}"]`).find(el => { const r = el.getBoundingClientRect(); return r.width > 20 && getComputedStyle(el).display !== 'none'; });
+ if (!pg) return null;
+ const R = pg.getBoundingClientRect(), [x, y, w, h] = pageByNum.get(num).regions[i].rect;
+ return {left: R.left + R.width * x / 100, top: R.top + R.height * y / 100, width: R.width * w / 100, height: R.height * h / 100};
+}
+function fLayout() {
+ const reg = pageByNum.get(F.num).regions[F.i], [x, y, w, h] = reg.rect;
+ const st = $('#focusStage').getBoundingClientRect();
+ const ar = (w * RATIO) / h, maxW = st.width - 24, maxH = st.height - 24;
+ const fw = Math.min(maxW, maxH * ar), fh = fw / ar;
+ const frame = $('#focusFrame'), pg = frame.firstElementChild;
+ Object.assign(frame.style, {width: fw + 'px', height: fh + 'px'});
+ const pw = fw / (w / 100);
+ Object.assign(pg.style, {width: pw + 'px', height: pw / RATIO + 'px', left: -x / 100 * pw + 'px', top: -y / 100 * (pw / RATIO) + 'px'});
+ const c = $('#laser'), dpr = devicePixelRatio || 1;
+ c.width = st.width * dpr; c.height = st.height * dpr; c.style.width = st.width + 'px'; c.style.height = st.height + 'px';
+}
+function fLabel() {
+ const r = pageByNum.get(F.num).regions[F.i], k = REGIONS.findIndex(q => q.num === F.num && q.i === F.i);
+ $('#fLabel').innerHTML = `${r.n ? `Etkinlik <b>${r.n}</b>` : 'Bölüm'} <small>Sayfa ${F.num}</small>`;
+ $('[data-act="f-next"]').disabled = k >= REGIONS.length - 1; $('[data-act="f-prev"]').disabled = k <= 0;
+}
+function fTool(t) {
+ F.tool = t; store.set('ftool', t);
+ $$('#focus [data-ftool]').forEach(b => b.classList.toggle('on', b.dataset.ftool === t));
+ $$('#fSwatches .sw').forEach(b => b.classList.toggle('on', b.dataset.c === F.color));
+ $('#fSwatches').classList.toggle('dim', t !== 'pen' && t !== 'marker');
+ $('#focus').dataset.tool = t;
+}
+function openFocus(num, i, from) {
+ const fresh = !F.open;
+ F.open = true; F.num = num; F.i = i;
+ const f = $('#focus'), frame = $('#focusFrame');
+ f.hidden = false; f.classList.remove('closing');
+ frame.innerHTML = ''; frame.append(pageEl(pageByNum.get(num), num % 2 ? 0 : 1, true));
+ fLayout(); fLabel(); fTool(F.tool); tip.hidden = true;
+ const start = from || (fresh ? bookRegionRect(num, i) : null);
+ if (start) { // kitaptaki yerinden büyüyerek gelsin
+  const end = frame.getBoundingClientRect();
+  frame.style.transition = 'none';
+  frame.style.transform = `translate(${start.left - end.left}px,${start.top - end.top}px) scale(${start.width / end.width},${start.height / end.height})`;
+  frame.getBoundingClientRect();
+  frame.style.transition = ''; frame.style.transform = '';
+ } else {
+  frame.animate([{opacity: 0, transform: 'scale(.97)'}, {opacity: 1, transform: 'none'}], {duration: 260, easing: 'ease-out'});
+ }
+ f.classList.add('on');
+}
+function closeFocus() {
+ if (!F.open) return;
+ F.open = false; F.laser = []; F.hover = null;
+ renderInk(F.num); store.set('ink', S.ink);
+ const f = $('#focus'), frame = $('#focusFrame'), to = bookRegionRect(F.num, F.i);
+ f.classList.remove('on'); f.classList.add('closing');
+ if (to) { // sayfadaki yerine küçülerek dönsün
+  const cur = frame.getBoundingClientRect();
+  frame.style.transform = `translate(${to.left - cur.left}px,${to.top - cur.top}px) scale(${to.width / cur.width},${to.height / cur.height})`;
+ }
+ setTimeout(() => { f.hidden = true; f.classList.remove('closing'); frame.style.transform = ''; frame.innerHTML = ''; }, to ? 420 : 200);
+}
+function fStep(d) {
+ const k = REGIONS.findIndex(q => q.num === F.num && q.i === F.i) + d, q = REGIONS[k];
+ if (!q) return;
+ renderInk(F.num); store.set('ink', S.ink);
+ if (!S.visible.includes(q.num)) go.to(q.num);
+ openFocus(q.num, q.i);
+}
+/* lazer: ardında sönen kırmızı iz */
+function laserDraw() {
+ const c = $('#laser'), x = c.getContext('2d'), dpr = devicePixelRatio || 1, now = performance.now();
+ x.clearRect(0, 0, c.width, c.height);
+ F.laser = F.laser.filter(p => now - p.t < 650);
+ for (let k = 1; k < F.laser.length; k++) {
+  const a = F.laser[k - 1], b = F.laser[k];
+  if (b.t - a.t > 120) continue;
+  const life = 1 - (now - b.t) / 650;
+  x.strokeStyle = `rgba(255,40,40,${life * .85})`; x.lineWidth = (4 + 6 * life) * dpr; x.lineCap = 'round';
+  x.shadowColor = 'rgba(255,0,0,.9)'; x.shadowBlur = 14 * dpr;
+  x.beginPath(); x.moveTo(a.x * dpr, a.y * dpr); x.lineTo(b.x * dpr, b.y * dpr); x.stroke();
+ }
+ if (F.hover && F.tool === 'laser') {
+  x.shadowColor = 'rgba(255,0,0,1)'; x.shadowBlur = 22 * dpr; x.fillStyle = '#ff3b30';
+  x.beginPath(); x.arc(F.hover.x * dpr, F.hover.y * dpr, 7 * dpr, 0, 7); x.fill();
+  x.shadowBlur = 0; x.fillStyle = '#fff'; x.beginPath(); x.arc(F.hover.x * dpr, F.hover.y * dpr, 2.5 * dpr, 0, 7); x.fill();
+ }
+ F.raf = F.laser.length || (F.hover && F.tool === 'laser') ? requestAnimationFrame(laserDraw) : 0;
+}
+(() => {
+ const stageEl = $('#focusStage');
+ let stroke = null;
+ const at = e => { const r = stageEl.getBoundingClientRect(); return {x: e.clientX - r.left, y: e.clientY - r.top, t: performance.now()}; };
+ const local = (e, pg) => { const r = pg.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * 1000, (e.clientY - r.top) / r.height * INK_H]; };
+ const repaint = n => $$(`#focusFrame .pg-ink`).forEach(s => s.innerHTML = inkSVG(n));
+ const erase = (n, p) => {
+  const list = S.ink[n] || [];
+  for (let i = list.length - 1; i >= 0; i--) if (list[i].d.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < 16 + list[i].w / 2)) { F.undo.push({type: 'del', num: n, s: list[i], i}); list.splice(i, 1); repaint(n); }
+ };
+ stageEl.addEventListener('pointerdown', e => {
+  if (e.target.closest('.hs')) return; // sayfadaki ses/video düğmeleri çalışsın
+  if (e.target === stageEl && F.tool !== 'laser') return closeFocus(); // boşluğa dokununca kapanır
+  try { stageEl.setPointerCapture(e.pointerId); } catch {}
+  if (F.tool === 'laser') { F.hover = at(e); F.laser.push(F.hover); if (!F.raf) laserDraw(); stroke = {laser: true}; return; }
+  const pg = $('#focusFrame .pg'); if (!pg) return;
+  const p = local(e, pg);
+  if (F.tool === 'eraser') { stroke = {erase: true, pg}; erase(F.num, p); return; }
+  const s = {t: F.tool, c: F.color, w: F.tool === 'marker' ? 22 : 3.2, d: [p]};
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); pg.querySelector('.pg-ink').append(g); g.innerHTML = strokeSVG(s);
+  stroke = {s, g, pg};
+ });
+ stageEl.addEventListener('pointermove', e => {
+  if (F.tool === 'laser' && (e.pointerType === 'mouse' || stroke)) {
+   F.hover = at(e); F.laser.push(F.hover);
+   if (!F.raf) laserDraw(); return;
+  }
+  if (!stroke || stroke.laser) return;
+  const p = local(e, stroke.pg);
+  if (stroke.erase) return erase(F.num, p);
+  const last = stroke.s.d.at(-1);
+  if (Math.hypot(p[0] - last[0], p[1] - last[1]) < 1.5) return;
+  stroke.s.d.push(p); stroke.g.innerHTML = strokeSVG(stroke.s);
+ });
+ const end = e => {
+  if (stroke?.s) { (S.ink[F.num] ||= []).push(stroke.s); F.undo.push({type: 'add', num: F.num, s: stroke.s}); stroke.g.remove(); repaint(F.num); store.set('ink', S.ink); }
+  if (stroke?.laser && e.pointerType !== 'mouse') F.hover = null;
+  stroke = null;
+ };
+ stageEl.addEventListener('pointerup', end); stageEl.addEventListener('pointercancel', end);
+ stageEl.addEventListener('pointerleave', () => { if (!stroke) F.hover = null; });
+ addEventListener('resize', () => { if (F.open) fLayout(); });
+})();
+function fUndo() {
+ const u = F.undo.pop(); if (!u) return;
+ const list = S.ink[u.num] ||= [];
+ if (u.type === 'add') { const i = list.indexOf(u.s); if (i >= 0) list.splice(i, 1); } else list.splice(u.i, 0, u.s);
+ $$('#focusFrame .pg-ink').forEach(s => s.innerHTML = inkSVG(F.num)); store.set('ink', S.ink);
+}
+function fClear() {
+ const [x, y, w, h] = pageByNum.get(F.num).regions[F.i].rect, list = S.ink[F.num] || [];
+ const inside = s => s.d.some(([px, py]) => px / 10 >= x && px / 10 <= x + w && py / INK_H * 100 >= y && py / INK_H * 100 <= y + h);
+ for (let i = list.length - 1; i >= 0; i--) if (inside(list[i])) { F.undo.push({type: 'del', num: F.num, s: list[i], i}); list.splice(i, 1); }
+ $$('#focusFrame .pg-ink').forEach(s => s.innerHTML = inkSVG(F.num)); store.set('ink', S.ink);
+}
+
 /* ——— bildirim & ipucu ——— */
 function toast(msg, action, ms = 3400) {
  const t = document.createElement('div'); t.className = 'toast';
@@ -812,9 +971,20 @@ const ACT = {
  color: el => { L.color = el.dataset.c; if (L.tool !== 'pen' && L.tool !== 'marker') L.tool = 'pen'; lensTool(L.tool); },
  'ink-undo': inkUndo, 'ink-clear': inkClear,
  'lens-in': () => lensZoom(L.s * 1.35), 'lens-out': () => lensZoom(L.s / 1.35), 'lens-close': lensClose,
- 'lens-forward': () => lensTurn(1), 'lens-back': () => lensTurn(-1)
+ 'lens-forward': () => lensTurn(1), 'lens-back': () => lensTurn(-1),
+ 'f-close': closeFocus, 'f-next': () => fStep(1), 'f-prev': () => fStep(-1), 'f-undo': fUndo, 'f-clear': fClear,
+ ftool: el => fTool(el.dataset.ftool),
+ fcolor: el => { F.color = el.dataset.c; if (F.tool !== 'pen' && F.tool !== 'marker') F.tool = 'pen'; fTool(F.tool); }
 };
+let downAt = null;
+host.addEventListener('pointerdown', e => { downAt = {x: e.clientX, y: e.clientY}; }, true);
 document.addEventListener('click', e => {
+ const ex = e.target.closest('#bookHost .ex');
+ if (ex && !e.target.closest('.hs')) {
+  const moved = downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 8;
+  if (!moved && !stage.classList.contains('flipping')) openFocus(+ex.closest('.pg').dataset.num, +ex.dataset.ex);
+  return;
+ }
  const hs = e.target.closest('.hs');
  if (hs) { e.preventDefault(); tip.hidden = true; return openResource(hs.dataset.res); }
  const tab = e.target.closest('.panel-tabs [role="tab"]');
@@ -826,8 +996,19 @@ host.addEventListener('dblclick', e => { if (!e.target.closest('.hs')) lensOpen(
 host.addEventListener('wheel', e => { if (e.ctrlKey) { e.preventDefault(); lensOpen('hand'); } }, {passive: false});
 
 /* klavye */
+const typing0 = e => !!e.target.matches?.('input,textarea,[contenteditable]');
 document.addEventListener('keydown', e => {
  const typing = !!e.target.matches?.('input,textarea,[contenteditable]');
+ if (F.open && $('#modal').hidden && !typing0(e)) {
+  const k = e.key.toLowerCase();
+  if (e.key === 'Escape') return closeFocus();
+  if (e.key === 'ArrowLeft') return fStep(1);
+  if (e.key === 'ArrowRight') return fStep(-1);
+  if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); return fUndo(); }
+  const t = {p: 'pen', l: 'laser', m: 'marker', e: 'eraser'}[k];
+  if (t && !e.ctrlKey && !e.metaKey) return fTool(t);
+  return;
+ }
  if (e.key === 'Escape') {
   if (!$('#modal').hidden) return closeModal();
   if (L.open) return lensClose();

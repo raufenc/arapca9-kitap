@@ -58,6 +58,12 @@ for n in range(0, 218):
                   'text': s['text'], 'resources': [r['id'] for r in kaynaklar if r['page'] == n], 'hotspots': []})
 
 
+# etkinlik bölgeleri (araclar/bolgeler.py)
+bolgeler = yukle(KAY / 'bolgeler.json') if (KAY / 'bolgeler.json').exists() else {}
+for pg in pages:
+    pg['regions'] = bolgeler.get(str(pg['number']), [])
+
+
 # içindekiler
 def ders_basligi(n, hangi):
     for l in sayfalar[n]['text'].split('\n'):
