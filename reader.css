@@ -90,6 +90,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke
 
 /* sayfalar */
 .pg{position:relative;background:#fffdf8;overflow:hidden;container-type:inline-size;user-select:none;-webkit-user-select:none}
+.pg-blank{background:#f1ece0} /* kapağın boş iç yüzü */
 .pg-ph{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(3px) saturate(.9);transform:scale(1.02)}
 .pg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s;pointer-events:none;-webkit-user-drag:none}
 .pg-img.on{opacity:1}
@@ -511,3 +512,11 @@ kbd{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 
  .pageno{min-width:64px}.pageno input{width:62px}
 }
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* indirme şifresi */
+.lock .field{margin:12px 0 10px}
+.lock .field input{color:var(--ink);letter-spacing:.04em}
+.lock-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.lock-msg{font-size:13px;color:var(--ink-2);min-height:1.2em}
+.lock-inline{padding:14px 16px 16px;margin-bottom:14px;border-radius:16px;background:var(--field);border:1px solid var(--line)}
+.lock-inline .off-lead{margin:0}

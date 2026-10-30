@@ -49,12 +49,15 @@ kaynaklar.sort(key=lambda r: (r['page'], int(r['id'].split('-r')[1])))
 
 # sayfalar
 pages = []
-for n in range(0, 218):
+SON = 218  # 217 basılı sayfa + arka kapak
+KAPAK = {0: 'kapak-on', SON: 'kapak-arka'}
+for n in range(0, SON + 1):
     if n in u1_sayfa:
         pages.append(u1_sayfa[n])
         continue
     s = sayfalar.get(n, {'text': ''})
-    pages.append({'number': n, 'image': f'assets/pages/{n:03d}.webp', 'thumb': f'assets/thumbs/{n:03d}.webp',
+    ad = KAPAK.get(n, f'{n:03d}')
+    pages.append({'number': n, 'image': f'assets/pages/{ad}.webp', 'thumb': f'assets/thumbs/{ad}.webp',
                   'text': s['text'], 'resources': [r['id'] for r in kaynaklar if r['page'] == n], 'hotspots': []})
 
 
@@ -78,6 +81,10 @@ def ilk(sart, bas, son):
     return next((n for n in range(bas, son) if sart(sayfalar[n]['text'])), None)
 
 
+def baslik(s):  # Türkçe büyük/küçük harf: str.title() 'İ'yi bozuyor
+    return ' '.join(w[0] + w[1:].replace('I', 'ı').replace('İ', 'i').lower() for w in s.split())
+
+
 UNITELER = [(1, 10, 77, 'HAYDİ TANIŞALIM'), (2, 78, 119, 'OKULDAYIM'), (3, 120, 165, 'EVDEYİM'), (4, 166, 203, 'HAYATIMDAN BİR GÜN')]
 ders2 = {1: 48, 2: 100, 3: 146, 4: 186}
 bolumler = [{'page': 0, 'title': 'Kapak', 'group': 'KİTAP'}, {'page': 7, 'title': 'İçindekiler'}]
@@ -97,16 +104,17 @@ for u, bas, son, ad in UNITELER:
                  {'page': d2, 'title': '2. ders', 'arabic': ar2}]
     if sonu:
         bolumler.append({'page': sonu, 'title': 'Ünite sonu çalışmaları'})
-bolumler += [{'page': 204, 'title': 'Sözlük', 'group': 'EKLER', 'arabic': 'القاموس'}, {'page': 215, 'title': 'Cevap anahtarı ve kaynaklar'}]
+bolumler += [{'page': 204, 'title': 'Sözlük', 'group': 'EKLER', 'arabic': 'القاموس'}, {'page': 215, 'title': 'Cevap anahtarı ve kaynaklar'},
+             {'page': SON, 'title': 'Arka kapak'}]
 bolumler.sort(key=lambda c: c['page'])
 
 aktiviteler = U1['activities'] + etkinlikler
 kitap = {
     'id': 'aihl-arabic9-2026', 'version': '3.0.0', 'title': 'Arapça 9',
     'unitTitle': 'Arapça 9', 'unitArabic': 'اللُّغَةُ العَرَبِيَّةُ',
-    'firstPage': 0, 'lastPage': 217,
+    'firstPage': 0, 'lastPage': SON,
     'source': {**U1['source'], 'pages': 218},
-    'units': [{'number': u, 'first': b, 'last': s, 'title': a.title()} for u, b, s, a in UNITELER],
+    'units': [{'number': u, 'first': b, 'last': s, 'title': baslik(a)} for u, b, s, a in UNITELER],
     'pages': pages, 'resources': kaynaklar, 'media': medya, 'activities': aktiviteler, 'chapters': bolumler,
     'stats': {'pages': len(pages), 'qr': len(kaynaklar),
               'audio': sum(m['kind'] == 'audio' for m in medya), 'video': sum(m['kind'] == 'video' for m in medya),

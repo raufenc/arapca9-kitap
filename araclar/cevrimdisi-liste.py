@@ -2,11 +2,17 @@
 
 Kitaba dosya eklenince ya da değişince yayından önce çalıştır:
     python3 araclar/cevrimdisi-liste.py
+
+İndirilecek dosyaların listesi şifreyle kilitlenir (araclar/kilitle.mjs); şifre depoda DURMAZ:
+A9_SIFRE ortam değişkeninden ya da ../arapca9-kaynak/indirme-sifresi.txt dosyasından okunur.
+Şifreyi değiştirmek için o dosyayı değiştirip bu betiği yeniden çalıştır.
 """
-import hashlib, json, pathlib
+import hashlib, json, os, pathlib, shutil, subprocess
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SKIP_DIRS = {'.git', 'araclar', '.claude'}
+SIFRE_DOSYASI = pathlib.Path(__file__).resolve().parents[2] / 'arapca9-kaynak/indirme-sifresi.txt'
+NODE = shutil.which('node') or '/Users/raufenc/pinokio/bin/miniconda/bin/node'
 SKIP_FILES = {'.DS_Store', '.nojekyll', 'README.md', 'sw.js', 'offline-files.json'}
 SHELL = ['index.html', 'reader.css', 'reader.js', 'book-data.js', 'activities.js', 'activity-bridge.js',
          'activity-host.html', 'activity-host.js', 'activity-h5p.js', 'activity-h5p.css',
@@ -48,6 +54,10 @@ shared = ['activity-host.html', 'activity-host.js', 'activity-bridge.js', 'activ
          [p for p, _ in files if p.startswith('assets/activities/_storyline/') and not p.endswith('mobile.min.js')]
 
 version = hashlib.sha1(json.dumps(files).encode()).hexdigest()[:10]
-out = {'version': version, 'total': sum(s for _, s in files), 'files': files, 'boot': boot, 'shared': shared}
+sifre = os.environ.get('A9_SIFRE') or SIFRE_DOSYASI.read_text(encoding='utf-8').strip()
+kilit = subprocess.run([NODE, str(ROOT / 'araclar/kilitle.mjs')], input=json.dumps({'password': sifre, 'data': files}),
+                       capture_output=True, text=True, check=True).stdout
+out = {'version': version, 'total': sum(s for _, s in files), 'count': len(files), 'locked': json.loads(kilit),
+       'boot': boot, 'shared': shared}
 (ROOT / 'offline-files.json').write_text(json.dumps(out, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
 print(f'{len(files)} dosya, {out["total"] / 1048576:.1f} MB, sürüm {version}')

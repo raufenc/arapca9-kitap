@@ -166,9 +166,7 @@ def sayfa():
     c = KAY / 'cikti'
     for kl in ('pages', 'thumbs'):
         for f in (c / kl).glob('*.webp'):
-            ad = '000.webp' if f.stem == 'kapak-on' else f.name
-            if f.stem == 'kapak-arka':
-                continue
+            ad = f.name  # kapak-on.webp = sayfa 0, kapak-arka.webp = son sayfa
             if ad[:3].isdigit() and 10 <= int(ad[:3]) <= 77:
                 continue  # 1. ünite görselleri yerinde kalır
             out = A / kl / ad

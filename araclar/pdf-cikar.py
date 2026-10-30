@@ -77,8 +77,9 @@ def sayfa_isle(args):
 def kapak(pdf, out):
     page = pymupdf.open(pdf)[0]
     r = page.rect
-    yarim = {'kapak-arka': pymupdf.Rect(r.x0, r.y0, r.x0 + r.width / 2, r.y1),
-             'kapak-on': pymupdf.Rect(r.x0 + r.width / 2, r.y0, r.x1, r.y1)}
+    # kitap sağdan sola: açık kapakta ön yüz SOLDA, arka yüz SAĞDA durur
+    yarim = {'kapak-on': pymupdf.Rect(r.x0, r.y0, r.x0 + r.width / 2, r.y1),
+             'kapak-arka': pymupdf.Rect(r.x0 + r.width / 2, r.y0, r.x1, r.y1)}
     for ad, clip in yarim.items():
         im = render(page, clip)
         im.save(out / 'pages' / f'{ad}.webp', 'WEBP', quality=82, method=6)

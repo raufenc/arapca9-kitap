@@ -13,9 +13,27 @@ const hasAr = s => /[؀-ۿ]/.test(s);
 
 const FIRST = B.firstPage, LAST = B.lastPage, N = B.pages.length;
 const CHAPTERS = B.chapters || C.chapters || [{page: FIRST, title: B.unitTitle, group: 'KİTAP'}];
-const pl = n => n === 0 ? 'Kapak' : String(n); // sayfa adı
+const pl = n => n === FIRST ? 'Kapak' : n === LAST ? 'Arka kapak' : String(n); // sayfa adı
 const RATIO = 1600 / 2257, INK_H = Math.round(1000 / RATIO);
-const idxOf = num => LAST - num, numOf = idx => LAST - idx;
+/* Kütüphanedeki sıra (ters çevrilmiş). Çift sayfada kitap gerçeği gibi dizilir: ön kapak tek başına,
+   iç kapak (basılı değil, boş kâğıt) 1. sayfanın karşısında, tekler solda çiftler sağda, arka kapak tek başına. */
+const BLANK = -1;
+function orderFor(single) {
+ const nums = B.pages.map(p => p.number);
+ if (single) return nums.reverse();
+ const inner = [BLANK, ...nums.slice(1, -1)];
+ if (inner.length % 2) inner.push(BLANK);
+ return [nums[0], ...inner, nums.at(-1)].reverse();
+}
+let ORDER = orderFor(false);
+const idxOf = num => ORDER.indexOf(num), numOf = idx => ORDER[idx];
+// çift sayfa yayılımları (okuma sırasıyla), boş iç kapak hariç
+const SPREADS = (() => {
+ const r = orderFor(false).reverse(), g = [[r[0]]];
+ for (let i = 1; i < r.length - 1; i += 2) g.push([r[i], r[i + 1]]);
+ g.push([r.at(-1)]);
+ return g.map(x => x.filter(n => n !== BLANK)).filter(x => x.length);
+})();
 const pageByNum = new Map(B.pages.map(p => [p.number, p]));
 const mediaById = new Map(B.media.map(m => [m.id, m]));
 const actById = new Map(B.activities.map(a => [a.id, a]));
@@ -62,18 +80,24 @@ const regionHTML = p => (p.regions || []).map((r, i) => {
  const [x, y, w, h] = r.rect;
  return `<div class="ex" data-ex="${i}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"><span class="ex-tag">${icon('i-focus')}${r.n ? `<b>${r.n}</b>` : ''}</span></div>`;
 }).join('');
-function pageEl(p, i, full) {
+function pageEl(p, side, full) {
  const el = document.createElement('div');
- el.className = 'pg ' + (i % 2 ? 'is-right' : 'is-left') + (S.marks.has(p.number) ? ' marked' : '');
+ el.className = 'pg ' + side + (S.marks.has(p.number) ? ' marked' : '');
  el.dataset.num = p.number; el.dataset.density = 'soft';
  el.innerHTML = `<div class="pg-ph" style="background-image:url('${p.thumb}')"></div><img class="pg-img${full ? ' on' : ''}" alt="Sayfa ${p.number}" draggable="false"${full ? ` src="${p.image}"` : ''}><svg class="pg-ink" viewBox="0 0 1000 ${INK_H}" preserveAspectRatio="none">${inkSVG(p.number)}</svg><div class="pg-ex">${regionHTML(p)}</div><div class="pg-hot">${hotspotHTML(p.number)}</div><div class="pg-gutter"></div><span class="pg-ribbon"></span>`;
+ return el;
+}
+function blankEl(side) { // kapağın iç yüzü
+ const el = document.createElement('div');
+ el.className = 'pg pg-blank ' + side; el.dataset.density = 'soft';
+ el.innerHTML = '<div class="pg-gutter"></div>';
  return el;
 }
 const loaded = new Set();
 function hydrate(centerIdx) {
  for (let d = -4; d <= 5; d++) {
-  const idx = centerIdx + d; if (idx < 0 || idx >= N) continue;
-  const num = numOf(idx); if (loaded.has(num)) continue; loaded.add(num);
+  const idx = centerIdx + d; if (idx < 0 || idx >= ORDER.length) continue;
+  const num = numOf(idx); if (num === BLANK || loaded.has(num)) continue; loaded.add(num);
   const p = pageByNum.get(num), im = new Image();
   im.decoding = 'async'; im.src = p.image;
   im.onload = () => $$(`.pg[data-num="${num}"] .pg-img`).forEach(img => { img.src = p.image; img.classList.add('on'); });
@@ -94,13 +118,15 @@ function measure() {
  if (pw * cols > aw) { pw = aw / cols; ph = pw / RATIO; }
  return {pw: Math.floor(pw), ph: Math.floor(ph), single, top: (padTop - padBot) / 2};
 }
-function build(startIdx) {
+function build(startNum) {
  const m = measure();
- if (!(m.pw > 60 && m.ph > 80)) { setTimeout(() => build(startIdx), 250); return; } // sekme henüz görünmüyor
+ if (!(m.pw > 60 && m.ph > 80)) { setTimeout(() => build(startNum), 250); return; } // sekme henüz görünmüyor
  if (S.pf && S.size && S.size.pw === m.pw && S.size.ph === m.ph && S.size.single === m.single) return;
- if (startIdx == null) startIdx = S.pf ? S.pf.getCurrentPageIndex() : idxOf(FIRST);
+ if (startNum == null) startNum = S.pf ? S.visible[0] : FIRST;
  if (S.pf) { try { S.pf.destroy(); } catch {} S.pf = null; }
  S.size = m; S.single = m.single;
+ ORDER = orderFor(m.single);
+ const startIdx = Math.max(0, idxOf(startNum));
  app.classList.toggle('single', m.single);
  host.innerHTML = '';
  // kütüphane bloğa width:100% verir; tek/çift kararını kabın genişliği belirler
@@ -108,9 +134,11 @@ function build(startIdx) {
  const block = document.createElement('div');
  host.appendChild(block);
  wrap.style.marginTop = m.top + 'px';
- const pages = B.pages.slice().reverse().map((p, i) => pageEl(p, i));
+ // çift sayfada tek sıradakiler solda; tek sayfada sayfanın kitaptaki yüzü (sağdan sola kitapta tekler solda)
+ const side = (n, i) => (m.single ? n % 2 : i % 2) ? 'is-left' : 'is-right';
+ const pages = ORDER.map((n, i) => n === BLANK ? blankEl(side(n, i)) : pageEl(pageByNum.get(n), side(n, i)));
  const pf = new St.PageFlip(block, {
-  width: m.pw, height: m.ph, size: 'fixed', autoSize: true, usePortrait: true, showCover: false,
+  width: m.pw, height: m.ph, size: 'fixed', autoSize: true, usePortrait: true, showCover: !m.single,
   startPage: startIdx, flippingTime: 780, maxShadowOpacity: .55, drawShadow: true,
   mobileScrollSupport: false, swipeDistance: 24, disableFlipByClick: true, showPageCorners: true, clickEventForward: true,
   cornerSize: 44 // köşe kıvrılması yalnız gerçek köşede (kütüphane varsayılanı ~150 px etkinliklerin üstüne biniyordu)
@@ -141,13 +169,13 @@ applyFs();
 
 function visibleIdx() {
  const i = S.pf.getCurrentPageIndex();
- if (S.single) return [i];
- const s = i - (i % 2); return [s, s + 1].filter(x => x < N);
+ if (S.single || i === 0) return [i];
+ const s = i % 2 ? i : i - 1; return [s, s + 1].filter(x => x < ORDER.length); // kapak tek, sonra (1,2), (3,4)…
 }
 function afterTurn() {
  if (!S.pf) return;
  const idx = visibleIdx();
- S.visible = idx.map(numOf).sort((a, b) => a - b);
+ S.visible = idx.map(numOf).filter(n => n !== BLANK).sort((a, b) => a - b);
  hydrate(idx[0]);
  const lo = S.visible[0], hi = S.visible[S.visible.length - 1];
  const label = lo === hi ? pl(lo) : `${pl(lo)}–${hi}`;
@@ -168,7 +196,7 @@ function afterTurn() {
 }
 function updateEdges() {
  if (!S.size) return;
- const f = (S.visible[0] - FIRST) / (N - 2), max = Math.max(4, S.size.pw * .018);
+ const f = (S.visible[0] - FIRST) / (LAST - FIRST), max = Math.max(4, S.size.pw * .018);
  $('#edgeRight').style.width = Math.round(f * max) + 'px';
  $('#edgeLeft').style.width = Math.round((1 - f) * max) + 'px';
 }
@@ -180,14 +208,20 @@ function chapterAt(num) {
 }
 
 /* ——— gezinme ——— */
+// Kütüphane, disableFlipByClick açıkken kendi düğme çevirmesini de "köşe dışı tıklama" sayıp yok sayıyor
+// (tek sayfa görünümünde hiç çevrilmiyordu); kodla çevirirken bu engel bir anlığına kalkar.
+function turn(fn) {
+ const st = S.pf.getSettings(); st.disableFlipByClick = false;
+ try { fn(); } finally { st.disableFlipByClick = true; }
+}
 const go = {
- forward() { if (S.pf && S.visible.at(-1) < LAST) S.pf.flipPrev('bottom'); },
- back() { if (S.pf && S.visible[0] > FIRST) S.pf.flipNext('bottom'); },
+ forward() { if (S.pf && S.visible.at(-1) < LAST) turn(() => S.pf.flipPrev('bottom')); },
+ back() { if (S.pf && S.visible[0] > FIRST) turn(() => S.pf.flipNext('bottom')); },
  to(num) {
   num = clamp(num | 0, FIRST, LAST); if (!S.pf) return;
   if (S.visible.includes(num)) return;
   const far = Math.abs(num - S.visible[0]) > 12;
-  far ? (S.pf.turnToPage(idxOf(num)), afterTurn(), flipSound()) : S.pf.flip(idxOf(num), 'bottom');
+  far ? (S.pf.turnToPage(idxOf(num)), afterTurn(), flipSound()) : turn(() => S.pf.flip(idxOf(num), 'bottom'));
  }
 };
 function toggleAuto(on = !S.auto) {
@@ -313,7 +347,14 @@ function openDocument(r) {
  const d = r.document, wrapEl = document.createElement('div'); wrapEl.className = 'docs';
  wrapEl.innerHTML = d.pages.map((src, i) => `<img src="${src}" alt="${esc(r.title)} · ${i + 1}" loading="lazy">`).join('');
  openModal({kind: kindOf(r), kicker: `Sayfa ${r.page} · ${KIND[kindOf(r)].name}`, title: r.title, body: wrapEl, width: Math.min(960, innerWidth - 40),
-  tools: `<a class="btn ghost" href="${d.src}" download target="_blank" rel="noopener">${icon('i-download')}<span>PDF indir</span></a>`});
+  tools: `<button class="btn ghost" data-act="pdf" data-src="${esc(d.src)}">${icon('i-download')}<span>PDF indir</span></button>`});
+}
+function downloadPdf(src) { // indirme şifre ister; kilit bir kez açılınca bu sekmede yeniden sorulmaz
+ if (LOCK.files) return saveFile(src);
+ $('#modalBody .lock-inline')?.remove();
+ const holder = document.createElement('div'); holder.className = 'lock-inline';
+ $('#modalBody').prepend(holder); $('#modalBody').scrollTop = 0;
+ lockForm(holder, 'PDF indirmek için şifre gerekli.', () => { holder.remove(); saveFile(src); });
 }
 
 /* etkinlikler: Codex'in etkinlik kabuğu (activity-host.html) aynen kullanılır */
@@ -485,9 +526,9 @@ function panelToc() {
 }
 function panelPages() {
  let h = '<div class="thumbs">';
- for (let n = FIRST; n <= LAST; n += 2) {
-  const pair = [n, n + 1].filter(x => x <= LAST), on = pair.some(x => S.visible.includes(x));
-  h += `<button class="th${on ? ' on' : ''}" data-act="goto" data-page="${n}"><span class="pair">${pair.map(x => `<span class="vis${S.seen.has(x) ? ' seen' : ''}"><img src="${pageByNum.get(x).thumb}" alt="Sayfa ${x}" loading="lazy"></span>`).join('')}</span><small>${pair.map(pl).join('–')}</small></button>`;
+ for (const pair of SPREADS) {
+  const on = pair.some(x => S.visible.includes(x));
+  h += `<button class="th${on ? ' on' : ''}" data-act="goto" data-page="${pair[0]}"><span class="pair">${pair.map(x => `<span class="vis${S.seen.has(x) ? ' seen' : ''}"><img src="${pageByNum.get(x).thumb}" alt="Sayfa ${x}" loading="lazy"></span>`).join('')}</span><small>${pair.map(pl).join('–')}</small></button>`;
  }
  return h + '</div>';
 }
@@ -591,7 +632,7 @@ function lensOpen(tool = 'hand') {
 }
 function lensBuild() {
  const sheet = $('#lensSheet'); sheet.innerHTML = '';
- S.visible.forEach(n => { const el = pageEl(pageByNum.get(n), S.visible.length > 1 ? (n % 2 ? 0 : 1) : 1, true); sheet.append(el); });
+ S.visible.forEach(n => { const el = pageEl(pageByNum.get(n), S.visible.length > 1 && n % 2 ? 'is-left' : 'is-right', true); sheet.append(el); });
  $('#lensPage').textContent = S.visible.map(pl).join('–');
  lensFit();
 }
@@ -769,7 +810,7 @@ function openFocus(num, i, from) {
  fWins().forEach((r, k, all) => {
   const win = document.createElement('div');
   win.className = 'fwin' + (all.length > 1 && k === 0 ? ' fhead' : '');
-  win.append(pageEl(pageByNum.get(num), num % 2 ? 0 : 1, true));
+  win.append(pageEl(pageByNum.get(num), num % 2 ? 'is-left' : 'is-right', true));
   frame.append(win);
  });
  fLayout(); fLabel(); fTool(F.tool); tip.hidden = true;
@@ -909,7 +950,7 @@ range.addEventListener('input', () => {
  paintRange(range);
  const pv = $('#scrubPreview'), n = +range.value, f = (n - FIRST) / (LAST - FIRST), w = range.getBoundingClientRect().width;
  pv.style.left = (w - 6 - f * (w - 12)) + 'px';
- pv.querySelector('img').src = pageByNum.get(n).thumb; pv.querySelector('span').textContent = `${n ? 'Sayfa ' + n : 'Kapak'} · ${chapterAt(n).title}`;
+ pv.querySelector('img').src = pageByNum.get(n).thumb; pv.querySelector('span').textContent = `${n === FIRST || n === LAST ? pl(n) : 'Sayfa ' + n} · ${chapterAt(n).title}`;
  pv.classList.add('on');
 });
 range.addEventListener('change', () => { $('#scrubPreview').classList.remove('on'); go.to(+range.value); });
@@ -959,6 +1000,7 @@ const ACT = {
  practice: el => openPractice(+el.dataset.page),
  'unit-quiz': () => { closePanel(); openUnitQuiz(); },
  'modal-close': () => closeModal(),
+ pdf: el => downloadPdf(el.dataset.src),
  'media-open': el => {
   const r = resById.get(el.dataset.res); if (!r) return;
   if (innerWidth < 900) closePanel();
@@ -1103,6 +1145,43 @@ function warmVisible() {
  }, 1200);
 }
 
+/* indirme kilidi: indirilecek dosyaların listesi şifreyle kilitli gelir (araclar/kilitle.mjs).
+   Şifre hiçbir yerde saklanmaz; doğru şifreyle açılan liste yalnız bu sekmenin belleğinde durur. */
+const LOCK = {files: null, fails: 0, until: 0};
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function unlockList(list, password) {
+ const k = list.locked, raw = await crypto.subtle.importKey('raw', new TextEncoder().encode(password.normalize('NFC')), 'PBKDF2', false, ['deriveKey']);
+ const key = await crypto.subtle.deriveKey({name: 'PBKDF2', salt: b64(k.salt), iterations: k.iter, hash: 'SHA-256'}, raw, {name: 'AES-GCM', length: 256}, false, ['decrypt']);
+ return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name: 'AES-GCM', iv: b64(k.iv)}, key, b64(k.data))));
+}
+function lockForm(el, lead, onOpen) {
+ el.innerHTML = `<form class="lock"><p class="off-lead">${esc(lead)}</p>
+  <label class="field"><input type="password" name="pw" autocomplete="current-password" placeholder="İndirme şifresi" aria-label="İndirme şifresi" required></label>
+  <div class="lock-row"><button class="btn" type="submit">${icon('i-download')}<span>Kilidi aç</span></button><span class="lock-msg" role="alert"></span></div></form>`;
+ const form = el.querySelector('form'), msg = el.querySelector('.lock-msg'), inp = form.pw;
+ setTimeout(() => inp.focus({preventScroll: true}), 60);
+ form.onsubmit = async e => {
+  e.preventDefault();
+  const wait = Math.ceil((LOCK.until - Date.now()) / 1000);
+  if (wait > 0) { msg.textContent = `Çok fazla deneme. ${wait} sn sonra yeniden dene.`; return; }
+  const list = await fileList();
+  if (!list?.locked) { msg.textContent = 'Dosya listesi alınamadı. İnternet bağlantısını kontrol et.'; return; }
+  msg.textContent = 'Kontrol ediliyor…'; form.querySelector('button').disabled = true;
+  try {
+   LOCK.files = await unlockList(list, inp.value); LOCK.fails = 0;
+   onOpen();
+  } catch {
+   LOCK.fails++; LOCK.until = Date.now() + Math.min(60, 2 ** LOCK.fails) * 1000; // her yanlışta bekleme ikiye katlanır
+   msg.textContent = 'Şifre yanlış.'; inp.value = ''; inp.focus();
+   form.querySelector('button').disabled = false;
+  }
+ };
+}
+function saveFile(src) {
+ const a = document.createElement('a'); a.href = src; a.download = src.split('/').pop(); a.rel = 'noopener';
+ document.body.append(a); a.click(); a.remove();
+}
+
 /* çevrimdışı kayıt penceresi */
 const OFF = {running: false, stop: false, prompt: null};
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); OFF.prompt = e; });
@@ -1125,7 +1204,10 @@ async function openOffline() {
  box.innerHTML = `<div class="empty"><div class="spin"></div>Hesaplanıyor…</div>`;
  const {list, have} = await offlineState();
  if (!list) { box.innerHTML = `<p class="off-lead">Dosya listesi alınamadı. İnternet bağlantısını kontrol edip yeniden dene.</p>`; return; }
- const missing = list.files.filter(([p]) => !have.has(absKey(p)));
+ const saved = store.get('offline', null), savedNow = saved?.version === list.version;
+ // kayıtlı ve güncel kopya şifresiz görünür (silmek serbest); yeni indirme ve güncelleme şifre ister
+ if (!LOCK.files && !savedNow) { lockForm(box, 'Kitabı bu cihaza indirmek için şifre gerekli.', openOffline); return; }
+ const missing = LOCK.files ? LOCK.files.filter(([p]) => !have.has(absKey(p))) : [];
  const haveBytes = list.total - missing.reduce((s, [, b]) => s + b, 0);
  const est = await navigator.storage?.estimate?.().catch(() => null);
  const free = est ? est.quota - est.usage : null;
@@ -1135,7 +1217,7 @@ async function openOffline() {
   <div class="off-stats">
    <div><b>${mb(list.total)}</b><small>Kitabın tamamı</small></div>
    <div><b>${mb(haveBytes)}</b><small>Bu cihazda</small></div>
-   <div><b>${list.files.length.toLocaleString('tr-TR')}</b><small>Dosya</small></div>
+   <div><b>${list.count.toLocaleString('tr-TR')}</b><small>Dosya</small></div>
   </div>
   <div class="off-bar"><i style="width:${haveBytes / list.total * 100}%"></i></div>
   <div class="off-status" id="offStatus">${done ? '✓ Hazır' : `${mb(list.total - haveBytes)} indirilecek${free != null && free < list.total - haveBytes ? ' · <span class="warn">cihazda yer az görünüyor</span>' : ''}`}</div>
@@ -1205,7 +1287,7 @@ function start() {
  const hash = /#p=(\d+)/.exec(location.hash), last = store.get('last', FIRST);
  const startNum = clamp(hash ? +hash[1] : last, FIRST, LAST);
  // ilk açılışta açık sayfaların görsellerini bekle
- const first = [startNum, startNum % 2 ? startNum - 1 : startNum + 1].filter(n => n >= FIRST && n <= LAST);
+ const first = SPREADS.find(g => g.includes(startNum)) || [startNum];
  let done = 0; const need = first.length + 1;
  const tick = () => { done++; $('#splashFill').style.width = done / need * 100 + '%'; if (done >= need) reveal(); };
  first.forEach(n => { const im = new Image(); im.onload = im.onerror = tick; im.src = pageByNum.get(n).image; loaded.add(n); });
@@ -1214,7 +1296,7 @@ function start() {
  function reveal() {
   if (shown) return; shown = true;
   $('#splashStatus').textContent = 'Hazır';
-  build(idxOf(startNum)); applyView();
+  build(startNum); applyView();
   setTimeout(() => {
    app.classList.add('ready'); $('#splash').classList.add('gone');
    if (!hash && last !== FIRST && last > FIRST) toast(`Kaldığın yerden devam: Sayfa ${last}`, {label: 'Başa dön', fn: () => go.to(FIRST)});
