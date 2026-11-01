@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="reader.css">
 <script defer src="book-data.js"></script>
 <script defer src="activities.js"></script>
+<script defer src="cevaplar.js"></script>
 <script defer src="activity-bridge.js"></script>
 <script defer src="vendor/page-flip.browser.js"></script>
 <script defer src="reader.js"></script>
@@ -247,8 +248,10 @@
  <div class="focus" id="focus" role="dialog" aria-label="Etkinlik büyütüldü" hidden>
   <div class="focus-back"></div>
   <div class="focus-stage" id="focusStage"><div class="focus-frame" id="focusFrame"></div><canvas id="laser" aria-hidden="true"></canvas></div>
+  <div class="fq" id="fq" hidden></div>
   <div class="focus-bar">
    <div class="fgroup">
+    <button class="lb" id="fAnswer" data-act="ftool" data-ftool="answer" title="Cevapla" aria-label="Cevapla" hidden><svg><use href="#i-hand"/></svg></button>
     <button class="lb" data-act="ftool" data-ftool="laser" title="Lazer işaretçi (L)" aria-label="Lazer işaretçi"><svg><use href="#i-laser"/></svg></button>
     <button class="lb" data-act="ftool" data-ftool="pen" title="Kalem (P)" aria-label="Kalem"><svg><use href="#i-pen"/></svg></button>
     <button class="lb" data-act="ftool" data-ftool="marker" title="Fosforlu kalem (M)" aria-label="Fosforlu kalem"><svg><use href="#i-marker"/></svg></button>

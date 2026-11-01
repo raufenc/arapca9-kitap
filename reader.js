@@ -62,10 +62,11 @@ const S = {
  pf: null, single: false, view: store.get('view', 'auto'), size: null,
  hot: store.get('hot', true), sound: store.get('sound', true), theme: store.get('theme', 'gece'),
  marks: new Set(store.get('marks', [])), notes: store.get('notes', []), seen: new Set(store.get('seen', [])),
- ink: store.get('ink', {}), acts: store.get('acts', {}), practice: store.get('practice', {}),
+ ink: store.get('ink', {}), acts: store.get('acts', {}), practice: store.get('practice', {}), ans: store.get('ans', {}),
  visible: [FIRST], auto: null, tab: 'toc', mediaFilter: 'all'
 };
 const app = $('#app'), stage = $('#stage'), host = $('#bookHost'), wrap = $('#bookWrap');
+const CV = window.CEVAP || {};
 
 /* ——— sayfa öğeleri ——— */
 function hotspotHTML(num) {
@@ -77,14 +78,14 @@ function hotspotHTML(num) {
 }
 // numaralı etkinliklerin sınırları: dokununca etkinlik ekranı kaplar
 const regionHTML = p => (p.regions || []).map((r, i) => {
- const [x, y, w, h] = r.rect;
- return `<div class="ex" data-ex="${i}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"><span class="ex-tag">${icon('i-focus')}${r.n ? `<b>${r.n}</b>` : ''}</span></div>`;
+ const [x, y, w, h] = r.rect, k = `${p.number}.${r.n}`, ans = CV[k]?.q.length > 0, done = S.ans[k]?.done;
+ return `<div class="ex${ans ? ' has-ans' : ''}${done ? ' solved' : ''}" data-ex="${i}" data-k="${k}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"><span class="ex-tag">${icon(done ? 'i-check' : ans ? 'i-pen' : 'i-focus')}${r.n ? `<b>${r.n}</b>` : ''}</span></div>`;
 }).join('');
 function pageEl(p, side, full) {
  const el = document.createElement('div');
  el.className = 'pg ' + side + (S.marks.has(p.number) ? ' marked' : '');
  el.dataset.num = p.number; el.dataset.density = 'soft';
- el.innerHTML = `<div class="pg-ph" style="background-image:url('${p.thumb}')"></div><img class="pg-img${full ? ' on' : ''}" alt="Sayfa ${p.number}" draggable="false"${full ? ` src="${p.image}"` : ''}><svg class="pg-ink" viewBox="0 0 1000 ${INK_H}" preserveAspectRatio="none">${inkSVG(p.number)}</svg><div class="pg-ex">${regionHTML(p)}</div><div class="pg-hot">${hotspotHTML(p.number)}</div><div class="pg-gutter"></div><span class="pg-ribbon"></span>`;
+ el.innerHTML = `<div class="pg-ph" style="background-image:url('${p.thumb}')"></div><img class="pg-img${full ? ' on' : ''}" alt="Sayfa ${p.number}" draggable="false"${full ? ` src="${p.image}"` : ''}><svg class="pg-ink" viewBox="0 0 1000 ${INK_H}" preserveAspectRatio="none">${inkSVG(p.number)}</svg><div class="pg-qz" data-num="${p.number}">${qzHTML(p.number)}</div><div class="pg-ex">${regionHTML(p)}</div><div class="pg-hot">${hotspotHTML(p.number)}</div><div class="pg-gutter"></div><span class="pg-ribbon"></span>`;
  return el;
 }
 function blankEl(side) { // kapağın iç yüzü
@@ -795,7 +796,7 @@ function fLabel() {
  $('[data-act="f-next"]').disabled = k >= REGIONS.length - 1; $('[data-act="f-prev"]').disabled = k <= 0;
 }
 function fTool(t) {
- F.tool = t; store.set('ftool', t);
+ F.tool = t; if (t !== 'answer') store.set('ftool', t);
  $$('#focus [data-ftool]').forEach(b => b.classList.toggle('on', b.dataset.ftool === t));
  $$('#fSwatches .sw').forEach(b => b.classList.toggle('on', b.dataset.c === F.color));
  $('#fSwatches').classList.toggle('dim', t !== 'pen' && t !== 'marker');
@@ -813,7 +814,8 @@ function openFocus(num, i, from) {
   win.append(pageEl(pageByNum.get(num), num % 2 ? 'is-left' : 'is-right', true));
   frame.append(win);
  });
- fLayout(); fLabel(); fTool(F.tool); tip.hidden = true;
+ qzOpen();
+ fLayout(); fLabel(); tip.hidden = true;
  const start = from || (fresh ? bookRegionRect(num, i) : null);
  if (start) { // kitaptaki yerinden büyüyerek gelsin
   const end = frame.getBoundingClientRect();
@@ -829,7 +831,7 @@ function openFocus(num, i, from) {
 function closeFocus() {
  if (!F.open) return;
  F.open = false; F.laser = []; F.hover = null;
- renderInk(F.num); store.set('ink', S.ink);
+ renderInk(F.num); store.set('ink', S.ink); qzClose();
  const f = $('#focus'), frame = $('#focusFrame'), to = bookRegionRect(F.num, F.i);
  f.classList.remove('on'); f.classList.add('closing');
  if (to) { // sayfadaki yerine küçülerek dönsün
@@ -878,6 +880,7 @@ function laserDraw() {
  stageEl.addEventListener('pointerdown', e => {
   if (e.target.closest('.hs')) return; // sayfadaki ses/video düğmeleri çalışsın
   if (e.target === stageEl && F.tool !== 'laser') return closeFocus(); // boşluğa dokununca kapanır
+  if (F.tool === 'answer') return; // cevaplama: dokunuşları etkinlik katmanı alır
   try { stageEl.setPointerCapture(e.pointerId); } catch {}
   if (F.tool === 'laser') { F.hover = at(e); F.laser.push(F.hover); if (!F.raf) laserDraw(); stroke = {laser: true}; return; }
   const pg = e.target.closest('#focusFrame .pg'); if (!pg) return;
@@ -908,6 +911,244 @@ function laserDraw() {
  stageEl.addEventListener('pointerleave', () => { if (!stroke) F.hover = null; });
  addEventListener('resize', () => { if (F.open) fLayout(); });
 })();
+/* ——— yazılı etkinlikler: cevap sayfanın üstünde verilir (cevaplar.js) ———
+   pick: işaretle, tf: doğru/yanlış, fill: boşluğa kart yerleştir, match: çizgiyle eşleştir */
+const Q = {k: null, blank: null, node: null};
+const qzSt = k => S.ans[k] ||= {v: {}};
+const qzSave = () => store.set('ans', S.ans);
+const rectCSS = ([x, y, w, h]) => `left:${x}%;top:${y}%;width:${w}%;height:${h}%`;
+const qzPen = document.createElement('canvas').getContext('2d');
+function fillSize(text, [, , w, h], fs) { // yazı boşluğa sığsın: birim sayfa genişliğinin yüzdesi
+ qzPen.font = '400 100px Arakom, "Geeza Pro", serif';
+ const tw = qzPen.measureText(text).width / 100;
+ return Math.min(fs || 3.6, h / RATIO * .78, w * .94 / Math.max(tw, .01)).toFixed(2);
+}
+const norm = t => String(t).normalize('NFC').trim();
+const pairKey = ([a, b]) => a < b ? `${a}-${b}` : `${b}-${a}`;
+const eqAns = (v, a) => (Array.isArray(a) ? a : [a]).some(x => norm(x) === norm(v));
+// bir sorunun durumu: her öğe için ok/no, toplam puan
+function qzGrade(q, v) {
+ if (q.t === 'pick') {
+  const sel = new Set(v || []), ok = new Set(q.ok), st = q.x.map((_, i) => sel.has(i) ? (ok.has(i) ? 'ok' : 'no') : '');
+  if (q.g) {
+   const grp = [...new Set(q.g)];
+   const right = grp.filter(g => q.x.every((_, i) => q.g[i] !== g || sel.has(i) === ok.has(i))).length;
+   return {st, right, total: grp.length};
+  }
+  const wrong = [...sel].filter(i => !ok.has(i)).length, hit = [...sel].filter(i => ok.has(i)).length;
+  return {st, right: Math.max(0, hit - wrong), total: q.ok.length};
+ }
+ if (q.t === 'tf' || q.t === 'shape') {
+  const st = q.x.map((_, i) => v?.[i] === undefined ? '' : v[i] === q.a[i] ? 'ok' : 'no');
+  return {st, right: st.filter(s => s === 'ok').length, total: q.x.length};
+ }
+ if (q.t === 'fill') {
+  const st = q.x.map(() => ''); let right = 0;
+  const used = new Set();
+  q.x.forEach((_, i) => {
+   const val = v?.[i]; if (val === undefined) return;
+   let good = false;
+   if (q.set) { // aynı kümedeki boşluklar yer değiştirebilir
+    const j = q.a.findIndex((a, m) => q.set[m] === q.set[i] && !used.has(m) && eqAns(val, a));
+    if (j >= 0) { used.add(j); good = true; }
+   } else good = eqAns(val, q.a[i]);
+   st[i] = good ? 'ok' : 'no'; if (good) right++;
+  });
+  return {st, right, total: q.x.length};
+ }
+ if (q.t === 'seq') {
+  const st = q.x.map((_, i) => { const w = v?.[i]; return !w?.length ? '' : norm(w.join(' ')) === norm(q.a[i]) ? 'ok' : w.length < q.a[i].split(' ').length ? '' : 'no'; });
+  return {st, right: st.filter(s => s === 'ok').length, total: q.x.length};
+ }
+ if (q.t === 'match') {
+  const want = new Set(q.p.map(pairKey)), have = v || [];
+  const st = have.map(e => want.has(pairKey(e)) ? 'ok' : 'no');
+  const hit = st.filter(s => s === 'ok').length, wrong = have.length - hit;
+  return {st, right: Math.max(0, hit - wrong), total: want.size};
+ }
+}
+function lineD(a, b) { // iki kutu arasında kavisli çizgi
+ const ax = a[0] + a[2] / 2, bx = b[0] + b[2] / 2, y1 = a[1] + a[3] / 2, y2 = b[1] + b[3] / 2;
+ if (Math.abs(ax - bx) < (a[2] + b[2]) / 2) { // üst üste
+  const down = y2 > y1, s1 = down ? a[1] + a[3] : a[1], s2 = down ? b[1] : b[1] + b[3], m = (s1 + s2) / 2;
+  return `M${ax} ${s1}C${ax} ${m} ${bx} ${m} ${bx} ${s2}`;
+ }
+ const right = bx > ax, x1 = right ? a[0] + a[2] : a[0], x2 = right ? b[0] : b[0] + b[2], m = (x1 + x2) / 2;
+ return `M${x1} ${y1}C${m} ${y1} ${m} ${y2} ${x2} ${y2}`;
+}
+const SHAPE = {c: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18"/></svg>', t: '<svg viewBox="0 0 40 40"><path d="M20 2 38 37H2Z"/></svg>', s: '<svg viewBox="0 0 40 40"><rect x="2" y="2" width="36" height="36"/></svg>'};
+function qzHTML(num) {
+ const list = Object.keys(CV).filter(k => parseInt(k) === num);
+ return list.map(k => {
+  const st = S.ans[k] || {v: {}}, cur = Q.k === k, show = st.show, chk = st.chk || show;
+  return CV[k].q.map((q, qi) => {
+   const v = show ? qzSolved(q) : st.v[qi], G = qzGrade(q, v);
+   const cls = i => chk && G.st[i] ? ' ' + G.st[i] : '';
+   const at = i => `data-k="${k}" data-q="${qi}" data-i="${i}"`;
+   if (q.t === 'pick') return q.x.map((r, i) => `<button class="qz qz-p m-${q.m}${(v || []).includes(i) ? ' on' : ''}${cls(i)}" ${at(i)} style="${rectCSS(r)}" aria-label="Seçenek ${i + 1}"></button>`).join('');
+   if (q.t === 'shape') return q.x.map((r, i) => `<button class="qz qz-s${cls(i)}" ${at(i)} style="${rectCSS(r)}" aria-label="Şekil çiz">${v?.[i] ? SHAPE[v[i]] : ''}</button>`).join('');
+   if (q.t === 'tf') return q.x.map((r, i) => { const m = v?.[i]; return `<button class="qz qz-tf${m === 1 ? ' yes' : m === 0 ? ' nope' : ''}${cls(i)}" ${at(i)} style="${rectCSS(r)}" aria-label="Doğru ya da yanlış"></button>`; }).join('');
+   if (q.t === 'fill') return q.x.map((r, i) => { const t = v?.[i]; return `<button class="qz qz-b${t !== undefined ? ' full' : ''}${cur && Q.blank === `${qi}.${i}` ? ' act' : ''}${cls(i)}" ${at(i)} style="${rectCSS(r)}" aria-label="Boşluk ${i + 1}">${t !== undefined ? `<span lang="ar" style="font-size:${fillSize(t, r, q.fs)}cqw">${esc(t)}</span>` : ''}</button>`; }).join('');
+   if (q.t === 'seq') return q.x.map((r, i) => { const t = (v?.[i] || []).join(' '); return `<button class="qz qz-b${t ? ' full' : ''}${cur && Q.blank === `${qi}.${i}` ? ' act' : ''}${cls(i)}" ${at(i)} style="${rectCSS(r)}" aria-label="Cümle ${i + 1}">${t ? `<span lang="ar" style="font-size:${fillSize(t, r, q.fs)}cqw">${esc(t)}</span>` : ''}</button>`; }).join('');
+   if (q.t === 'match') {
+    const lines = (v || []).map((e, i) => `<path class="${chk ? G.st[i] : ''}" d="${lineD(q.x[e[0]], q.x[e[1]])}"/>`).join('');
+    if (q.place) { // kare, ızgaradaki yerine konur: sayfadan kesilip orada gösterilir
+     const put = (v || []).map(([a, b], i) => { const s = q.x[a], r = q.x[b]; return `<span class="qz-put${chk ? ' ' + G.st[i] : ''}" style="${rectCSS(r)};background-image:url(${pageByNum.get(num).image});background-size:${10000 / s[2]}% ${10000 / s[3]}%;background-position:${s[0] / (100 - s[2]) * 100}% ${s[1] / (100 - s[3]) * 100}%"></span>`; }).join('');
+     return put + q.x.map((r, i) => `<button class="qz qz-n${cur && Q.node === `${qi}.${i}` ? ' act' : ''}" ${at(i)} style="${rectCSS(r)}" aria-label="Kare ${i + 1}"></button>`).join('');
+    }
+    return `<svg class="qz-lines" viewBox="0 0 100 100" preserveAspectRatio="none">${lines}</svg>` + q.x.map((r, i) => `<button class="qz qz-n${cur && Q.node === `${qi}.${i}` ? ' act' : ''}" ${at(i)} style="${rectCSS(r)}" aria-label="Eşleştirme kutusu ${i + 1}"></button>`).join('');
+   }
+   return '';
+  }).join('');
+ }).join('');
+}
+function qzSolved(q) {
+ if (q.t === 'pick') return q.ok;
+ if (q.t === 'tf' || q.t === 'shape') return q.a;
+ if (q.t === 'fill') return q.a.map(a => Array.isArray(a) ? a[0] : a);
+ if (q.t === 'seq') return q.a.map(a => a.split(' '));
+ if (q.t === 'match') return q.p;
+}
+function qzPaint() {
+ const k = Q.k; if (!k) return;
+ const num = parseInt(k), html = qzHTML(num);
+ $$(`.pg-qz[data-num="${num}"]`).forEach(el => el.innerHTML = html);
+ qzTray();
+}
+function qzBank() { // boşluklara konacak kartlar: her cevap kaç boşluğa gidiyorsa o kadar
+ const out = [], st = S.ans[Q.k];
+ CV[Q.k].q.forEach((q, qi) => {
+  if (q.t === 'seq') { // sıradaki cümlenin kelimeleri
+   const [q0, i] = (Q.blank || '').split('.').map(Number);
+   if (q0 !== qi || !Number.isInteger(i)) return;
+   const used = [...(st?.v[qi]?.[i] || [])];
+   const h = s => [...s].reduce((a, c) => (a * 31 + c.codePointAt(0)) >>> 0, 11);
+   q.a[i].split(' ').map((t, n) => ({qi, t, n})).sort((a, b) => h(a.t) - h(b.t) || a.n - b.n).forEach(w => { const u = used.indexOf(w.t); if (u >= 0) used.splice(u, 1); out.push({qi, t: w.t, left: u >= 0 ? 0 : 1}); });
+   return;
+  }
+  if (q.t !== 'fill') return;
+  const count = new Map();
+  q.a.forEach(a => { const t = norm(Array.isArray(a) ? a[0] : a); count.set(t, (count.get(t) || 0) + 1); });
+  (q.xtra || []).forEach(t => count.has(norm(t)) || count.set(norm(t), 1));
+  const used = Object.values(st?.v[qi] || {}).map(norm);
+  [...count.entries()].forEach(([t, n]) => out.push({qi, t, left: n - used.filter(u => u === t).length}));
+ });
+ // karışık ama her açılışta aynı sırada
+ const h = s => [...s].reduce((a, c) => (a * 31 + c.codePointAt(0)) >>> 0, 7);
+ return out.sort((a, b) => a.qi - b.qi || (CV[Q.k].q[a.qi].t === 'seq' ? 0 : h(a.t) - h(b.t)));
+}
+function qzTray() {
+ const el = $('#fq'), k = Q.k;
+ if (!k) { el.hidden = true; return; }
+ const c = CV[k], st = qzSt(k), bank = st.show ? [] : qzBank(), has = c.q.length > 0;
+ const score = c.q.reduce((a, q, qi) => { const g = qzGrade(q, st.v[qi]); return [a[0] + g.right, a[1] + g.total]; }, [0, 0]);
+ const msg = st.show ? 'Doğru cevaplar gösteriliyor' : st.chk ? (score[0] === score[1] ? `Harika! ${score[0]}/${score[1]} doğru` : `${score[0]}/${score[1]} doğru. Kırmızıları değiştirip yeniden dene.`) : '';
+ el.hidden = false;
+ el.innerHTML = `${bank.length ? `<div class="fq-bank">${bank.map(b => `<button class="fq-tile${b.left <= 0 ? ' used' : ''}" data-q="${b.qi}" data-t="${esc(b.t)}" lang="ar"${b.left <= 0 ? ' disabled' : ''}>${esc(b.t)}</button>`).join('')}</div>` : ''}
+ <div class="fq-row">${msg ? `<span class="fq-msg${st.chk && !st.show && score[0] === score[1] ? ' good' : ''}">${msg}</span>` : c.note ? `<span class="fq-msg">${esc(c.note)}</span>` : ''}
+ ${has ? `<button class="fq-btn pri" data-qa="check"${st.show ? ' disabled' : ''}>${icon('i-check')}Kontrol et</button><button class="fq-btn" data-qa="reset">${icon('i-undo')}Temizle</button><button class="fq-btn" data-qa="show">${icon('i-spark')}${st.show ? 'Cevaplarımı getir' : 'Cevapları göster'}</button>` : ''}<button class="fq-btn" data-qa="key">${icon('i-doc')}Cevap anahtarı</button></div>`;
+ const bar = $('#focus .focus-bar').offsetHeight || 56; // telefonda araç çubuğu iki satıra çıkabiliyor
+ el.style.bottom = bar + 18 + 'px';
+ $('#focusStage').style.bottom = bar + 26 + el.offsetHeight + 'px';
+ if (F.open) fLayout();
+}
+function qzOpen() {
+ const r = pageByNum.get(F.num).regions[F.i], k = `${F.num}.${r.n}`;
+ Q.k = CV[k] ? k : null; Q.blank = null; Q.node = null;
+ const ans = Q.k && CV[k].q.length > 0;
+ $('#fAnswer').hidden = !ans;
+ if (ans) { fTool('answer'); qzNextBlank(); qzPaint(); }
+ else { fTool(store.get('ftool', 'pen')); if (Q.k) qzTray(); else { $('#fq').hidden = true; $('#focusStage').style.bottom = ''; } }
+}
+function qzClose() {
+ const k = Q.k; Q.k = null; Q.blank = null; Q.node = null;
+ $('#fq').hidden = true; $('#focusStage').style.bottom = '';
+ if (!k) return;
+ const num = parseInt(k), html = qzHTML(num);
+ $$(`.pg-qz[data-num="${num}"]`).forEach(el => el.innerHTML = html);
+ qzMarkDone(k);
+}
+function qzMarkDone(k) {
+ const done = S.ans[k]?.done;
+ $$(`.ex[data-k="${k}"]`).forEach(el => { el.classList.toggle('solved', !!done); el.querySelector('use')?.setAttribute('href', done ? '#i-check' : '#i-pen'); });
+}
+function qzNextBlank() { // sıradaki boş kutuyu seç
+ const st = qzSt(Q.k); Q.blank = null;
+ for (const [qi, q] of CV[Q.k].q.entries()) {
+  if (q.t !== 'fill' && q.t !== 'seq') continue;
+  const i = q.t === 'seq' ? q.x.findIndex((_, i) => (st.v[qi]?.[i] || []).length < q.a[i].split(' ').length) : q.x.findIndex((_, i) => st.v[qi]?.[i] === undefined);
+  if (i >= 0) { Q.blank = `${qi}.${i}`; return; }
+ }
+}
+function qzChanged() { const st = qzSt(Q.k); st.chk = false; st.done = false; qzSave(); qzPaint(); }
+$('#focusFrame').addEventListener('click', e => {
+ const b = e.target.closest('.qz'); if (!b || F.tool !== 'answer' || b.dataset.k !== Q.k) return;
+ const st = qzSt(Q.k); if (st.show) return;
+ const qi = +b.dataset.q, i = +b.dataset.i, q = CV[Q.k].q[qi];
+ if (q.t === 'pick') {
+  let v = st.v[qi] || [];
+  if (v.includes(i)) v = v.filter(x => x !== i);
+  else { if (q.g) v = v.filter(x => q.g[x] !== q.g[i]); v = [...v, i]; }
+  st.v[qi] = v;
+ } else if (q.t === 'tf') {
+  const v = st.v[qi] ||= {}, m = v[i];
+  if (m === undefined) v[i] = 1; else if (m === 1) v[i] = 0; else delete v[i];
+ } else if (q.t === 'shape') { // dokundukça daire, üçgen, kare, boş
+  const v = st.v[qi] ||= {}, o = [...(q.opt || 'cts')], n = o.indexOf(v[i]) + 1;
+  if (n >= o.length) delete v[i]; else v[i] = o[n];
+ } else if (q.t === 'fill') {
+  const v = st.v[qi] ||= {}, id = `${qi}.${i}`;
+  if (v[i] !== undefined) { delete v[i]; Q.blank = id; }
+  else Q.blank = Q.blank === id ? null : id;
+ } else if (q.t === 'seq') { // dokununca cümle silinir, kelimeler yeniden seçilir
+  const v = st.v[qi] ||= {};
+  delete v[i]; Q.blank = `${qi}.${i}`;
+ } else if (q.t === 'match') {
+  const id = `${qi}.${i}`;
+  if (!Q.node) { Q.node = id; return qzPaint(); }
+  const [q0, a] = Q.node.split('.').map(Number); Q.node = null;
+  if (q0 !== qi || a === i) return qzPaint();
+  let v = st.v[qi] || []; const key = pairKey([a, i]);
+  if (v.some(x => pairKey(x) === key)) v = v.filter(x => pairKey(x) !== key);
+  else { if (!q.multi) v = v.filter(x => !x.includes(a) && !x.includes(i)); v = [...v, [a, i]]; }
+  st.v[qi] = v;
+ }
+ qzChanged();
+});
+$('#fq').addEventListener('click', e => {
+ const tile = e.target.closest('.fq-tile');
+ if (tile) {
+  const st = qzSt(Q.k), qi = +tile.dataset.q;
+  if (CV[Q.k].q[qi].t === 'seq') {
+   const i = +Q.blank.split('.')[1], v = st.v[qi] ||= {};
+   (v[i] ||= []).push(tile.dataset.t);
+   if (v[i].length >= CV[Q.k].q[qi].a[i].split(' ').length) qzNextBlank();
+   return qzChanged();
+  }
+  if (!Q.blank || +Q.blank.split('.')[0] !== qi) { const q = CV[Q.k].q[qi], i = q.x.findIndex((_, i) => st.v[qi]?.[i] === undefined); if (i < 0) return; Q.blank = `${qi}.${i}`; }
+  const i = +Q.blank.split('.')[1];
+  (st.v[qi] ||= {})[i] = tile.dataset.t;
+  qzNextBlank();
+  return qzChanged();
+ }
+ const a = e.target.closest('[data-qa]')?.dataset.qa; if (!a) return;
+ const st = qzSt(Q.k), c = CV[Q.k];
+ if (a === 'check') {
+  st.chk = true;
+  const [r, t] = c.q.reduce((s, q, qi) => { const g = qzGrade(q, st.v[qi]); return [s[0] + g.right, s[1] + g.total]; }, [0, 0]);
+  st.done = r === t; qzSave(); qzMarkDone(Q.k);
+ } else if (a === 'reset') {
+  S.ans[Q.k] = {v: {}}; qzSave(); qzMarkDone(Q.k); qzNextBlank();
+ } else if (a === 'show') {
+  st.show = !st.show; qzSave();
+ } else if (a === 'key') {
+  const box = document.createElement('div'); box.className = 'key-view';
+  box.innerHTML = `<img src="${c.key}" alt="Cevap anahtarı">`;
+  return openModal({kind: 'document', kicker: `Sayfa ${F.num} · Etkinlik ${Q.k.split('.')[1]}`, title: 'Cevap anahtarı', body: box, width: Math.min(820, innerWidth - 32)});
+ }
+ qzPaint();
+});
+document.fonts?.load('400 20px Arakom', 'أ').then(() => Object.keys(CV).length && $$('.pg-qz').forEach(el => el.innerHTML = qzHTML(+el.dataset.num)));
 function fUndo() {
  const u = F.undo.pop(); if (!u) return;
  const list = S.ink[u.num] ||= [];

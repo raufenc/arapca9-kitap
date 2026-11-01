@@ -14,7 +14,7 @@ SKIP_DIRS = {'.git', 'araclar', '.claude'}
 SIFRE_DOSYASI = pathlib.Path(__file__).resolve().parents[2] / 'arapca9-kaynak/indirme-sifresi.txt'
 NODE = shutil.which('node') or '/Users/raufenc/pinokio/bin/miniconda/bin/node'
 SKIP_FILES = {'.DS_Store', '.nojekyll', 'README.md', 'sw.js', 'offline-files.json'}
-SHELL = ['index.html', 'reader.css', 'reader.js', 'book-data.js', 'activities.js', 'activity-bridge.js',
+SHELL = ['index.html', 'reader.css', 'reader.js', 'book-data.js', 'activities.js', 'cevaplar.js', 'activity-bridge.js',
          'activity-host.html', 'activity-host.js', 'activity-h5p.js', 'activity-h5p.css',
          'vendor/page-flip.browser.js', 'manifest.webmanifest']
 

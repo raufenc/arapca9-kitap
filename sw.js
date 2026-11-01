@@ -2,7 +2,7 @@
    Kabuk dosyaları ağdan taze alınır (yoksa önbellekten); sayfa, ses, video ve etkinlik dosyaları önbellekten. */
 const CACHE = 'arapca9-kitap';
 const BASE = new URL('./', self.location).href;
-const SHELL = new Set(['index.html', 'reader.css', 'reader.js', 'book-data.js', 'activities.js', 'activity-bridge.js',
+const SHELL = new Set(['index.html', 'reader.css', 'reader.js', 'book-data.js', 'activities.js', 'cevaplar.js', 'activity-bridge.js',
  'activity-host.html', 'activity-host.js', 'activity-h5p.js', 'activity-h5p.css', 'manifest.webmanifest', 'offline-files.json',
  'vendor/page-flip.browser.js']);
 
