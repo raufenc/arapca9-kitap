@@ -571,3 +571,58 @@ kbd{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 
 @media (max-width:640px){.fq-tile{font-size:19px;padding:3px 10px}.fq-btn{height:32px;padding:0 9px;font-size:12px}}
 /* dar ekranda odak araç çubuğu ekrana sığsın (Cevapla düğmesi eklenince taşıyordu) */
 @media (max-width:520px){.focus-bar .fgroup{max-width:100%;flex-wrap:wrap;justify-content:center}.focus-bar .fgroup .lb{width:38px;height:38px}.focus-bar .fgroup .lsep{display:none}.focus-bar .sw{width:20px;height:20px}}
+
+/* paket 2: yanlışları tekrar dene, kontrol sesi, dinle */
+.fq-btn.pri2{background:transparent;color:var(--gold);box-shadow:inset 0 0 0 1.5px var(--gold)}
+.fq-btn.fq-ico{width:34px;padding:0;justify-content:center}
+.fq-btn.fq-ico[aria-pressed="false"]{color:var(--ink-3)}
+.fq-btn.listen{background:var(--k-audio);color:#fff}
+/* sürükle-bırak */
+.fq-tile,.focus[data-tool="answer"] .qz-b,.focus[data-tool="answer"] .qz-n{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.fq-tile{cursor:grab}
+.fq-tile.dragging,.qz.dragging{opacity:.35}
+html.dragging,html.dragging *{cursor:grabbing!important}
+html.dragging{-webkit-user-select:none;user-select:none}
+.dg-ghost{position:fixed;z-index:200;left:0;top:0;pointer-events:none;transform:translate(-50%,-50%) scale(1.08);padding:5px 13px;border-radius:10px;background:#fffdf8;color:#16211d;border:1px solid rgba(0,0,0,.2);font:400 22px/1.35 var(--ar);box-shadow:0 14px 30px -8px rgba(0,0,0,.55);white-space:nowrap}
+.dg-ghost.dg-piece{padding:0;border-radius:4px;background-repeat:no-repeat;border:2px solid #2f7de1}
+.focus[data-tool="answer"] .qz.drop{background:rgba(47,125,225,.22)!important;box-shadow:inset 0 0 0 .45cqw #2f7de1!important}
+/* ünite ilerlemesi */
+.ups{display:flex;flex-direction:column;gap:4px;margin-bottom:6px}
+.up{display:grid;grid-template-columns:1fr auto;grid-template-areas:"tx go" "bar bar";gap:6px 10px;width:100%;padding:9px 10px;border-radius:12px;text-align:left;transition:background .2s}
+.up:hover{background:var(--glass-2)}
+.up-tx{grid-area:tx;display:flex;flex-direction:column;min-width:0}
+.up-tx b{font-size:14px}.up-tx small{font-size:12px;color:var(--ink-3)}
+.up-bar{grid-area:bar;height:5px;border-radius:5px;background:var(--line);overflow:hidden}
+.up-bar i{display:block;height:100%;background:var(--k-practice);border-radius:5px}
+.up-go{grid-area:go;align-self:center;font-size:12px;font-weight:700;color:var(--gold);white-space:nowrap}
+
+/* tahta modu: elle açılır; yazılar, düğmeler ve dokunma alanları büyür, puan sayısı gizlenir */
+html.board{--u:1.4;--top-h:76px;--dock-h:86px}
+@media (min-width:2400px){html.board{--u:2.6;--top-h:140px;--dock-h:160px}}
+html.board .tb{width:calc(40px*var(--u));height:calc(40px*var(--u));border-radius:calc(12px*var(--u))}
+html.board .tb svg,html.board .db svg,html.board .lb svg{width:calc(20px*var(--u));height:calc(20px*var(--u))}
+html.board .db{width:calc(42px*var(--u));height:calc(42px*var(--u));border-radius:calc(13px*var(--u))}
+html.board .db-big svg{width:calc(24px*var(--u));height:calc(24px*var(--u))}
+html.board .dock{padding:calc(6px*var(--u));border-radius:calc(20px*var(--u))}
+html.board .pageno{height:calc(42px*var(--u));min-width:calc(92px*var(--u))}
+html.board .pageno input{width:calc(84px*var(--u));font-size:calc(15px*var(--u))}
+html.board .pageno span{font-size:calc(10px*var(--u))}
+html.board .brand-text b{font-size:calc(15px*var(--u))}
+html.board .chap-title{font-size:calc(14px*var(--u))}
+html.board .pa{font-size:calc(13px*var(--u));padding:calc(6px*var(--u)) calc(12px*var(--u))}
+html.board .focus .lb{width:calc(40px*var(--u));height:calc(40px*var(--u));border-radius:calc(11px*var(--u))}
+html.board .focus .sw{width:calc(24px*var(--u));height:calc(24px*var(--u))}
+html.board .flabel{font-size:calc(14px*var(--u));min-width:calc(118px*var(--u))}
+html.board .flabel small{font-size:calc(11px*var(--u))}
+html.board .fq{width:min(calc(980px*var(--u)),calc(100vw - 16px));padding:calc(7px*var(--u)) calc(9px*var(--u));gap:calc(6px*var(--u));border-radius:calc(16px*var(--u))}
+html.board .fq-bank,html.board .fq-row{gap:calc(6px*var(--u))}
+html.board .fq-tile,html.board .dg-ghost:not(.dg-piece){font-size:calc(22px*var(--u));padding:calc(5px*var(--u)) calc(13px*var(--u));border-radius:calc(10px*var(--u));min-width:calc(40px*var(--u))}
+html.board .fq-btn{height:calc(34px*var(--u));padding:0 calc(12px*var(--u));font-size:calc(13px*var(--u));border-radius:calc(10px*var(--u));gap:calc(6px*var(--u))}
+html.board .fq-btn.fq-ico{width:calc(34px*var(--u));padding:0}
+html.board .fq-btn svg{width:calc(16px*var(--u));height:calc(16px*var(--u))}
+html.board .fq-msg{font-size:calc(13px*var(--u))}
+html.board .focus[data-tool="answer"] .qz-p::before,html.board .focus[data-tool="answer"] .qz-tf::before,html.board .focus[data-tool="answer"] .qz-s::before{content:"";position:absolute;inset:-.4cqw}
+html.board .panel,html.board .player,html.board .toasts,html.board .tip{zoom:var(--u)}
+html.board .focus-stage{bottom:calc(76px*var(--u))}
+@media (max-width:760px){html.board{--u:1;--top-h:54px;--dock-h:64px}html.board .panel,html.board .player,html.board .toasts,html.board .tip{zoom:1}}
+html.board .panel .tb{width:40px;height:40px;border-radius:12px}html.board .panel .tb svg{width:20px;height:20px} /* panel zaten bütünüyle büyütülüyor */

@@ -63,7 +63,7 @@ const S = {
  hot: store.get('hot', true), sound: store.get('sound', true), theme: store.get('theme', 'gece'),
  marks: new Set(store.get('marks', [])), notes: store.get('notes', []), seen: new Set(store.get('seen', [])),
  ink: store.get('ink', {}), acts: store.get('acts', {}), practice: store.get('practice', {}), ans: store.get('ans', {}),
- visible: [FIRST], auto: null, tab: 'toc', mediaFilter: 'all'
+ visible: [FIRST], auto: null, tab: 'toc', mediaFilter: 'all', board: store.get('board', false)
 };
 const app = $('#app'), stage = $('#stage'), host = $('#bookHost'), wrap = $('#bookWrap');
 const CV = window.CEVAP || {};
@@ -517,6 +517,7 @@ function panelToc() {
  let h = `<div class="p-hero"><small>AİHL · 9. SINIF</small><span class="ar">${esc(B.unitArabic)}</span><b>${esc(B.title)}</b>
   <div class="meta">${(B.units || []).length || 1} ünite · ${N} sayfa · ${B.stats.audio} ses · ${B.stats.video} video · ${B.activities.length} etkinlik</div>
   <div class="prog"><i style="width:${pct}%"></i></div><div class="meta">Gezilen sayfalar %${pct} · Tamamlanan etkinlik ${doneActs}/${B.activities.length}</div></div>
+  ${unitProgressHTML()}
   <button class="row k-quiz" data-act="unit-quiz"><span class="ic">${icon('i-spark')}</span><span class="tx"><b>1. ünite değerlendirmesi</b><small>${(C.quiz || []).length} soruluk kısa test${uq ? ` · son: ${uq.right}/${uq.total}` : ''}</small></span></button>`;
  const cur = chapterAt(S.visible[0]).page;
  CHAPTERS.forEach(c => {
@@ -524,6 +525,30 @@ function panelToc() {
   h += `<button class="ch${c.page === cur ? ' on' : ''}" data-act="goto" data-page="${c.page}"><img src="${pageByNum.get(c.page).thumb}" alt="" loading="lazy"><span>${esc(c.title)}${c.arabic ? ` <bdi lang="ar" class="ch-ar">${esc(c.arabic)}</bdi>` : ''}</span><small>${pl(c.page)}</small></button>`;
  });
  return h;
+}
+/* ünite ünite yazılı etkinlik özeti. Birim: bir cevap anahtarı (parçalı etkinlik tek sayılır); yalnız anahtarlı
+   (sözlü) etkinlikler paydaya girmez. Ortalama: son "Kontrol et"i duran etkinliklerin puan ortalaması. Veri S.ans'tan. */
+function unitStats() {
+ const keys = [...new Set(B.pages.flatMap(p => (p.regions || []).map(r => `${p.number}.${r.n}`)))].filter(k => CV[k]?.q.length);
+ return (B.units || []).map(u => {
+  const list = keys.filter(k => { const n = parseInt(k); return n >= u.first && n <= u.last; });
+  let done = 0, sum = 0, n = 0;
+  list.forEach(k => { const st = S.ans[k]; if (!st) return; if (st.done) done++; if (st.chk || st.done) { const [r, t] = qzScore(k); if (t) { sum += r / t; n++; } } });
+  return {u, total: list.length, done, avg: n ? Math.round(sum / n * 100) : null, next: list.find(k => !S.ans[k]?.done)};
+ }).filter(x => x.total);
+}
+function unitProgressHTML() {
+ const rows = unitStats().map(({u, total, done, avg, next}) => `<button class="up" data-act="unit-next" data-u="${u.number}" title="${next ? 'İlk çözülmemiş etkinliğe git' : 'Bütün etkinlikler çözüldü'}">
+  <span class="up-tx"><b>${u.number}. ünite</b><small>${done}/${total} etkinlik${avg != null && !S.board ? ` · ortalama %${avg}` : ''}</small></span>
+  <span class="up-bar"><i style="width:${done / total * 100}%"></i></span><span class="up-go">${next ? `Sayfa ${parseInt(next)}` : '✓'}</span></button>`).join('');
+ return rows ? `<div class="grp">YAZILI ETKİNLİKLER</div><div class="ups">${rows}</div>` : '';
+}
+function openNextIn(unit) {
+ const s = unitStats().find(x => x.u.number === unit);
+ if (!s?.next) return toast(`${unit}. ünitedeki bütün yazılı etkinlikler çözüldü`);
+ const num = parseInt(s.next), i = pageByNum.get(num).regions.findIndex(r => `${num}.${r.n}` === s.next), near = S.visible.includes(num);
+ closePanel(); go.to(num);
+ setTimeout(() => openFocus(num, i), near ? 50 : 950);
 }
 function panelPages() {
  let h = '<div class="thumbs">';
@@ -806,6 +831,7 @@ function openFocus(num, i, from) {
  const fresh = !F.open;
  F.open = true; F.num = num; F.i = i;
  const f = $('#focus'), frame = $('#focusFrame');
+ if (fresh) $('#toasts').replaceChildren(); // açılış bildirimi kart bankının üstüne binmesin
  f.hidden = false; f.classList.remove('closing');
  frame.innerHTML = '';
  fWins().forEach((r, k, all) => {
@@ -913,7 +939,7 @@ function laserDraw() {
 })();
 /* ——— yazılı etkinlikler: cevap sayfanın üstünde verilir (cevaplar.js) ———
    pick: işaretle, tf: doğru/yanlış, fill: boşluğa kart yerleştir, match: çizgiyle eşleştir */
-const Q = {k: null, blank: null, node: null};
+const Q = {k: null, blank: null, node: null, msg: null};
 const qzSt = k => S.ans[k] ||= {v: {}};
 const qzSave = () => store.set('ans', S.ans);
 const rectCSS = ([x, y, w, h]) => `left:${x}%;top:${y}%;width:${w}%;height:${h}%`;
@@ -983,7 +1009,10 @@ function qzHTML(num) {
   const st = S.ans[k] || {v: {}}, cur = Q.k === k, show = st.show, chk = st.chk || show;
   return CV[k].q.map((q, qi) => {
    const v = show ? qzSolved(q) : st.v[qi], G = qzGrade(q, v);
-   const cls = i => chk && G.st[i] ? ' ' + G.st[i] : '';
+   // "yanlışları tekrar dene"den sonra yerinde kalan doğrular, yeniden kontrole kadar yeşil kalır
+   const keep = !chk && st.keep?.[qi], kept = (id, s) => keep && keep.includes(id) && s === 'ok';
+   const cls = i => chk && G.st[i] ? ' ' + G.st[i] : kept(i, G.st[i]) ? ' ok' : '';
+   const lcls = (e, i) => chk ? G.st[i] : kept(pairKey(e), G.st[i]) ? 'ok' : '';
    const at = i => `data-k="${k}" data-q="${qi}" data-i="${i}"`;
    if (q.t === 'pick') return q.x.map((r, i) => `<button class="qz qz-p m-${q.m}${(v || []).includes(i) ? ' on' : ''}${cls(i)}" ${at(i)} style="${rectCSS(r)}" aria-label="Seçenek ${i + 1}"></button>`).join('');
    if (q.t === 'shape') return q.x.map((r, i) => `<button class="qz qz-s${cls(i)}" ${at(i)} style="${rectCSS(r)}" aria-label="Şekil çiz">${v?.[i] ? SHAPE[v[i]] : ''}</button>`).join('');
@@ -991,9 +1020,9 @@ function qzHTML(num) {
    if (q.t === 'fill') return q.x.map((r, i) => { const t = v?.[i]; return `<button class="qz qz-b${t !== undefined ? ' full' : ''}${cur && Q.blank === `${qi}.${i}` ? ' act' : ''}${cls(i)}" ${at(i)} style="${rectCSS(r)}" aria-label="Boşluk ${i + 1}">${t !== undefined ? `<span lang="ar" style="font-size:${fillSize(t, r, q.fs)}cqw">${esc(t)}</span>` : ''}</button>`; }).join('');
    if (q.t === 'seq') return q.x.map((r, i) => { const t = (v?.[i] || []).join(' '); return `<button class="qz qz-b${t ? ' full' : ''}${cur && Q.blank === `${qi}.${i}` ? ' act' : ''}${cls(i)}" ${at(i)} style="${rectCSS(r)}" aria-label="Cümle ${i + 1}">${t ? `<span lang="ar" style="font-size:${fillSize(t, r, q.fs)}cqw">${esc(t)}</span>` : ''}</button>`; }).join('');
    if (q.t === 'match') {
-    const lines = (v || []).map((e, i) => `<path class="${chk ? G.st[i] : ''}" d="${lineD(q.x[e[0]], q.x[e[1]])}"/>`).join('');
+    const lines = (v || []).map((e, i) => `<path class="${lcls(e, i)}" d="${lineD(q.x[e[0]], q.x[e[1]])}"/>`).join('');
     if (q.place) { // kare, ızgaradaki yerine konur: sayfadan kesilip orada gösterilir
-     const put = (v || []).map(([a, b], i) => { const s = q.x[a], r = q.x[b]; return `<span class="qz-put${chk ? ' ' + G.st[i] : ''}" style="${rectCSS(r)};background-image:url(${pageByNum.get(num).image});background-size:${10000 / s[2]}% ${10000 / s[3]}%;background-position:${s[0] / (100 - s[2]) * 100}% ${s[1] / (100 - s[3]) * 100}%"></span>`; }).join('');
+     const put = (v || []).map((e, i) => { const [a, b] = e, s = q.x[a], r = q.x[b], c = lcls(e, i); return `<span class="qz-put${c ? ' ' + c : ''}" style="${rectCSS(r)};background-image:url(${pageByNum.get(num).image});background-size:${10000 / s[2]}% ${10000 / s[3]}%;background-position:${s[0] / (100 - s[2]) * 100}% ${s[1] / (100 - s[3]) * 100}%"></span>`; }).join('');
      return put + q.x.map((r, i) => `<button class="qz qz-n${cur && Q.node === `${qi}.${i}` ? ' act' : ''}" ${at(i)} style="${rectCSS(r)}" aria-label="Kare ${i + 1}"></button>`).join('');
     }
     return `<svg class="qz-lines" viewBox="0 0 100 100" preserveAspectRatio="none">${lines}</svg>` + q.x.map((r, i) => `<button class="qz qz-n${cur && Q.node === `${qi}.${i}` ? ' act' : ''}" ${at(i)} style="${rectCSS(r)}" aria-label="Eşleştirme kutusu ${i + 1}"></button>`).join('');
@@ -1041,12 +1070,14 @@ function qzTray() {
  const el = $('#fq'), k = Q.k;
  if (!k) { el.hidden = true; return; }
  const c = CV[k], st = qzSt(k), bank = st.show ? [] : qzBank(), has = c.q.length > 0;
- const score = c.q.reduce((a, q, qi) => { const g = qzGrade(q, st.v[qi]); return [a[0] + g.right, a[1] + g.total]; }, [0, 0]);
- const msg = st.show ? 'Doğru cevaplar gösteriliyor' : st.chk ? (score[0] === score[1] ? `Harika! ${score[0]}/${score[1]} doğru` : `${score[0]}/${score[1]} doğru. Kırmızıları değiştirip yeniden dene.`) : '';
+ const score = qzScore(k), all = score[0] === score[1], board = S.board; // tahta modunda puan sayısı gösterilmez
+ const msg = st.show ? 'Doğru cevaplar gösteriliyor' : st.chk ? (all ? (board ? 'Harika! Hepsi doğru' : `Harika! ${score[0]}/${score[1]} doğru`) : (board ? 'Kırmızıları değiştirip yeniden dene.' : `${score[0]}/${score[1]} doğru. Kırmızıları değiştirip yeniden dene.`)) : Q.msg || '';
+ const wrong = has && st.chk && !st.show && !all, lr = st.done && !st.show && LISTEN.get(k);
+ const playing = lr && audioRes === lr.id && !audio.paused && !audio.ended;
  el.hidden = false;
  el.innerHTML = `${bank.length ? `<div class="fq-bank">${bank.map(b => `<button class="fq-tile${b.left <= 0 ? ' used' : ''}" data-q="${b.qi}" data-t="${esc(b.t)}" lang="ar"${b.left <= 0 ? ' disabled' : ''}>${esc(b.t)}</button>`).join('')}</div>` : ''}
- <div class="fq-row">${msg ? `<span class="fq-msg${st.chk && !st.show && score[0] === score[1] ? ' good' : ''}">${msg}</span>` : c.note ? `<span class="fq-msg">${esc(c.note)}</span>` : ''}
- ${has ? `<button class="fq-btn pri" data-qa="check"${st.show ? ' disabled' : ''}>${icon('i-check')}Kontrol et</button><button class="fq-btn" data-qa="reset">${icon('i-undo')}Temizle</button><button class="fq-btn" data-qa="show">${icon('i-spark')}${st.show ? 'Cevaplarımı getir' : 'Cevapları göster'}</button>` : ''}<button class="fq-btn" data-qa="key">${icon('i-doc')}Cevap anahtarı</button></div>`;
+ <div class="fq-row">${msg ? `<span class="fq-msg${st.chk && !st.show && all ? ' good' : ''}">${msg}</span>` : c.note ? `<span class="fq-msg">${esc(c.note)}</span>` : ''}
+ ${has ? `<button class="fq-btn pri" data-qa="check"${st.show ? ' disabled' : ''}>${icon('i-check')}Kontrol et</button>${wrong ? `<button class="fq-btn pri2" data-qa="retry">${icon('i-loop')}Yanlışları tekrar dene</button>` : ''}<button class="fq-btn" data-qa="reset">${icon('i-undo')}Temizle</button><button class="fq-btn" data-qa="show">${icon('i-spark')}${st.show ? 'Cevaplarımı getir' : 'Cevapları göster'}</button>` : ''}${lr ? `<button class="fq-btn listen" data-qa="listen" aria-pressed="${playing}">${icon(playing ? 'i-pause' : 'i-audio')}${playing ? 'Durdur' : 'Dinle'}</button>` : ''}<button class="fq-btn" data-qa="key">${icon('i-doc')}Cevap anahtarı</button>${has ? `<button class="fq-btn fq-ico" data-qa="tone" aria-pressed="${QS.on}" title="${QS.on ? 'Kontrol sesini kapat' : 'Kontrol sesini aç'}" aria-label="${QS.on ? 'Kontrol sesini kapat' : 'Kontrol sesini aç'}">${icon(QS.on ? 'i-sound' : 'i-mute')}</button>` : ''}</div>`;
  const bar = $('#focus .focus-bar').offsetHeight || 56; // telefonda araç çubuğu iki satıra çıkabiliyor
  el.style.bottom = bar + 18 + 'px';
  $('#focusStage').style.bottom = bar + 26 + el.offsetHeight + 'px';
@@ -1054,7 +1085,7 @@ function qzTray() {
 }
 function qzOpen() {
  const r = pageByNum.get(F.num).regions[F.i], k = `${F.num}.${r.n}`;
- Q.k = CV[k] ? k : null; Q.blank = null; Q.node = null;
+ Q.k = CV[k] ? k : null; Q.blank = null; Q.node = null; Q.msg = null;
  const ans = Q.k && CV[k].q.length > 0;
  $('#fAnswer').hidden = !ans;
  if (ans) { fTool('answer'); qzNextBlank(); qzPaint(); }
@@ -1080,7 +1111,65 @@ function qzNextBlank() { // sıradaki boş kutuyu seç
   if (i >= 0) { Q.blank = `${qi}.${i}`; return; }
  }
 }
-function qzChanged() { const st = qzSt(Q.k); st.chk = false; st.done = false; qzSave(); qzPaint(); }
+function qzChanged() { const st = qzSt(Q.k); st.chk = false; st.done = false; Q.msg = null; qzSave(); qzPaint(); }
+const qzScore = k => CV[k].q.reduce((a, q, qi) => { const g = qzGrade(q, S.ans[k]?.v[qi]); return [a[0] + g.right, a[1] + g.total]; }, [0, 0]);
+/* yanlışları tekrar dene: yalnız kırmızılar silinir, doğrular yerinde ve yeşil kalır, odak ilk boş yere gider */
+function qzRetry() {
+ const k = Q.k, st = qzSt(k); let first = null;
+ st.keep = {};
+ CV[k].q.forEach((q, qi) => {
+  const v = st.v[qi]; if (v == null) return;
+  const G = qzGrade(q, v), mark = i => { if (!first) first = `${qi}.${i}`; };
+  if (q.t === 'pick') { v.forEach(i => G.st[i] === 'no' && mark(i)); st.v[qi] = v.filter(i => G.st[i] !== 'no'); st.keep[qi] = st.v[qi].filter(i => G.st[i] === 'ok'); }
+  else if (q.t === 'match') { v.forEach((e, n) => G.st[n] === 'no' && mark(e[0])); st.v[qi] = v.filter((_, n) => G.st[n] !== 'no'); st.keep[qi] = st.v[qi].map(pairKey); }
+  else { // tf, shape, fill, seq: öğe numarasına göre
+   Object.keys(v).forEach(i => { if (G.st[i] === 'no') { mark(i); delete v[i]; } });
+   st.keep[qi] = Object.keys(v).filter(i => G.st[i] === 'ok').map(Number);
+  }
+ });
+ st.chk = false; st.done = false; qzSave(); qzMarkDone(k);
+ qzNextBlank(); Q.node = null;
+ Q.msg = 'Yanlışlar silindi. Boş kalan yerleri yeniden dene.';
+ qzPaint();
+ const at = Q.blank || first;
+ if (at) qzFocusAt(at);
+}
+function qzFocusAt(at) { // parçalı etkinlikte o öğe başka parçadaysa o parçaya geç
+ const [q0, i] = at.split('.').map(Number), k = Q.k, num = F.num, r = CV[k].q[q0].x[i], cx = r[0] + r[2] / 2, cy = r[1] + r[3] / 2;
+ const j = pageByNum.get(num).regions.findIndex(g => `${num}.${g.n}` === k && cx >= g.rect[0] && cx <= g.rect[0] + g.rect[2] && cy >= g.rect[1] && cy <= g.rect[1] + g.rect[3]);
+ if (j >= 0 && j !== F.i) { const msg = Q.msg; openFocus(num, j); Q.msg = msg; Q.blank = Q.blank || null; qzPaint(); }
+ $$(`#focusFrame .qz[data-k="${k}"][data-q="${q0}"][data-i="${i}"]`).at(-1)?.focus({preventScroll: true}); // son pencere = parçanın kendisi
+}
+/* kontrol sesi: kısa, yumuşak tek ton (sayfa sesinin AudioContext'i); tercih bu cihazda saklanır */
+const QS = {on: store.get('qsound', true)};
+function qzTone(good) {
+ if (!QS.on) return;
+ try {
+  ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+  if (ac.state === 'suspended') ac.resume();
+  const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain(), d = good ? .42 : .26;
+  o.type = good ? 'sine' : 'triangle';
+  o.frequency.setValueAtTime(good ? 784 : 262, t);
+  if (!good) o.frequency.exponentialRampToValueAtTime(220, t + d);
+  g.gain.setValueAtTime(.0001, t);
+  g.gain.exponentialRampToValueAtTime(good ? .06 : .035, t + .02);
+  g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(ac.destination); o.start(t); o.stop(t + d + .05);
+ } catch {}
+}
+/* "Dinle": yalnız bölgesinin içinde kitabın kendi ses karekodu duran etkinlikler (tahmin yok) */
+const LISTEN = new Map();
+B.pages.forEach(p => (p.regions || []).forEach(rg => {
+ const k = `${p.number}.${rg.n}`; if (!CV[k]?.q.length || LISTEN.has(k)) return;
+ const [X, Y, W, H] = rg.rect;
+ const r = (resByPage.get(p.number) || []).find(r => {
+  if (mediaById.get(r.media)?.kind !== 'audio') return false;
+  const cx = r.rect[0] + r.rect[2] / 2, cy = r.rect[1] + r.rect[3] / 2;
+  return cx >= X && cx <= X + W && cy >= Y && cy <= Y + H;
+ });
+ if (r) LISTEN.set(k, r);
+}));
+['play', 'pause', 'ended'].forEach(ev => audio.addEventListener(ev, () => { if (F.open && Q.k && LISTEN.has(Q.k)) qzTray(); }));
 $('#focusFrame').addEventListener('click', e => {
  const b = e.target.closest('.qz'); if (!b || F.tool !== 'answer' || b.dataset.k !== Q.k) return;
  const st = qzSt(Q.k); if (st.show) return;
@@ -1110,7 +1199,7 @@ $('#focusFrame').addEventListener('click', e => {
   if (q0 !== qi || a === i) return qzPaint();
   let v = st.v[qi] || []; const key = pairKey([a, i]);
   if (v.some(x => pairKey(x) === key)) v = v.filter(x => pairKey(x) !== key);
-  else { if (!q.multi) v = v.filter(x => !x.includes(a) && !x.includes(i)); v = [...v, [a, i]]; }
+  else { if (!q.multi) v = v.filter(x => !x.includes(a) && !x.includes(i)); v = [...v, q.place && placeSrc(q).has(i) && !placeSrc(q).has(a) ? [i, a] : [a, i]]; } // bulmacada önce kare, sonra yer
   st.v[qi] = v;
  }
  qzChanged();
@@ -1134,11 +1223,17 @@ $('#fq').addEventListener('click', e => {
  const a = e.target.closest('[data-qa]')?.dataset.qa; if (!a) return;
  const st = qzSt(Q.k), c = CV[Q.k];
  if (a === 'check') {
-  st.chk = true;
-  const [r, t] = c.q.reduce((s, q, qi) => { const g = qzGrade(q, st.v[qi]); return [s[0] + g.right, s[1] + g.total]; }, [0, 0]);
-  st.done = r === t; qzSave(); qzMarkDone(Q.k);
+  st.chk = true; delete st.keep; Q.msg = null;
+  const [r, t] = qzScore(Q.k);
+  st.done = r === t; qzSave(); qzMarkDone(Q.k); qzTone(st.done);
+ } else if (a === 'retry') {
+  return qzRetry();
+ } else if (a === 'tone') {
+  QS.on = !QS.on; store.set('qsound', QS.on); if (QS.on) qzTone(true);
+ } else if (a === 'listen') {
+  const r = LISTEN.get(Q.k), m = r && mediaById.get(r.media); if (m) playAudio(r, m);
  } else if (a === 'reset') {
-  S.ans[Q.k] = {v: {}}; qzSave(); qzMarkDone(Q.k); qzNextBlank();
+  S.ans[Q.k] = {v: {}}; Q.msg = null; qzSave(); qzMarkDone(Q.k); qzNextBlank();
  } else if (a === 'show') {
   st.show = !st.show; qzSave();
  } else if (a === 'key') {
@@ -1148,6 +1243,99 @@ $('#fq').addEventListener('click', e => {
  }
  qzPaint();
 });
+/* sürükle-bırak: kartlar (fill, seq) ve bulmaca kareleri (place) parmakla ya da fareyle taşınır.
+   Dokunarak koyma aynen sürer; kısa dokunuş tıklama sayılır, 7 px'ten uzun hareket sürüklemedir. */
+const placeSrc = q => new Set(q.p.map(p => p[0]));
+const placeNorm = (q, v) => { const s = placeSrc(q); return (v || []).map(e => s.has(e[0]) ? e : [e[1], e[0]]); }; // [kare, yer]
+const D = {src: null, ghost: null, over: null, x0: 0, y0: 0, pid: null, moved: false, skip: 0};
+function dSource(e) {
+ if (!F.open || F.tool !== 'answer' || !Q.k || qzSt(Q.k).show) return null;
+ const tile = e.target.closest('#fq .fq-tile:not([disabled])');
+ if (tile) return {kind: 'tile', qi: +tile.dataset.q, t: tile.dataset.t, el: tile};
+ const b = e.target.closest('#focusFrame .qz'); if (!b || b.dataset.k !== Q.k) return null;
+ const qi = +b.dataset.q, i = +b.dataset.i, q = CV[Q.k].q[qi], v = qzSt(Q.k).v[qi];
+ if (q.t === 'fill' && v?.[i] !== undefined) return {kind: 'blank', qi, i, t: v[i], el: b};
+ if (q.t === 'match' && q.place) {
+  if (placeSrc(q).has(i)) return {kind: 'piece', qi, a: i, el: b};
+  const e2 = placeNorm(q, v).find(x => x[1] === i); if (e2) return {kind: 'piece', qi, a: e2[0], from: i, el: b};
+ }
+ return null;
+}
+function dTarget(x, y) { // parmağın altındaki geçerli bırakma yeri
+ const s = D.src, b = document.elementFromPoint(x, y)?.closest('#focusFrame .qz');
+ if (!b || b.dataset.k !== Q.k || +b.dataset.q !== s.qi) return null;
+ const q = CV[Q.k].q[s.qi], j = +b.dataset.i;
+ if (q.t === 'fill') return s.kind === 'blank' && j === s.i ? null : b;
+ if (q.t === 'seq') return Q.blank === `${s.qi}.${j}` ? b : null; // kelimeler yalnız açık cümleye
+ if (q.place) return placeSrc(q).has(j) || j === s.from ? null : b;
+ return null;
+}
+function dGhost(s) {
+ const g = document.createElement('div'); g.className = 'dg-ghost';
+ if (s.kind === 'piece') {
+  const q = CV[Q.k].q[s.qi], c = q.x[s.a], r = s.el.getBoundingClientRect();
+  g.classList.add('dg-piece');
+  Object.assign(g.style, {width: r.width + 'px', height: r.height + 'px', backgroundImage: `url(${pageByNum.get(F.num).image})`, backgroundSize: `${10000 / c[2]}% ${10000 / c[3]}%`, backgroundPosition: `${c[0] / (100 - c[2]) * 100}% ${c[1] / (100 - c[3]) * 100}%`});
+ } else { g.lang = 'ar'; g.textContent = s.t; }
+ document.body.append(g); return g;
+}
+function dEnd() {
+ D.ghost?.remove(); D.over?.classList.remove('drop'); D.src?.el.classList.remove('dragging');
+ document.documentElement.classList.remove('dragging');
+ D.src = D.ghost = D.over = null; D.moved = false; D.pid = null;
+}
+function dDrop(b) {
+ const s = D.src, st = qzSt(Q.k), q = CV[Q.k].q[s.qi], j = b ? +b.dataset.i : -1;
+ if (s.kind === 'tile') {
+  if (!b) return; // dışarı bırakılan kart bankta kalır
+  const v = st.v[s.qi] ||= {};
+  if (q.t === 'seq') { (v[j] ||= []).push(s.t); if (v[j].length >= q.a[j].split(' ').length) qzNextBlank(); return qzChanged(); }
+  v[j] = s.t; qzNextBlank(); return qzChanged(); // dolu boşluktaki eski kart banka döner
+ }
+ if (s.kind === 'blank') { // boşluktan boşluğa: yer değiştirir; dışarı: banka döner
+  const v = st.v[s.qi];
+  if (!b) delete v[s.i]; else { const o = v[j]; v[j] = s.t; if (o === undefined) delete v[s.i]; else v[s.i] = o; }
+  qzNextBlank(); return qzChanged();
+ }
+ if (s.kind === 'piece') {
+  let v = placeNorm(q, st.v[s.qi]);
+  if (!b) { if (s.from == null) return; st.v[s.qi] = v.filter(e => e[1] !== s.from); return qzChanged(); }
+  const occ = v.find(e => e[1] === j);
+  v = v.filter(e => e !== occ && e[0] !== s.a && e[1] !== s.from);
+  v.push([s.a, j]);
+  if (occ && s.from != null) v.push([occ[0], s.from]); // dolu yere bırakınca iki kare yer değiştirir
+  st.v[s.qi] = v; Q.node = null; return qzChanged();
+ }
+}
+document.addEventListener('pointerdown', e => {
+ D.skip = 0; // yeni basış: sürüklemeden kalan tıklama yasağı biter
+ if (D.src || e.button > 0) return;
+ const s = dSource(e); if (!s) return;
+ D.src = s; D.x0 = e.clientX; D.y0 = e.clientY; D.pid = e.pointerId; D.moved = false;
+}, true);
+document.addEventListener('pointermove', e => {
+ if (!D.src || e.pointerId !== D.pid) return;
+ if (!D.moved) {
+  if (Math.hypot(e.clientX - D.x0, e.clientY - D.y0) < 7) return;
+  D.moved = true; D.ghost = dGhost(D.src); D.src.el.classList.add('dragging');
+  document.documentElement.classList.add('dragging');
+ }
+ e.preventDefault();
+ D.ghost.style.left = e.clientX + 'px'; D.ghost.style.top = e.clientY + 'px';
+ const t = dTarget(e.clientX, e.clientY);
+ if (t !== D.over) { D.over?.classList.remove('drop'); t?.classList.add('drop'); D.over = t; }
+}, {passive: false});
+document.addEventListener('pointerup', e => {
+ if (!D.src || e.pointerId !== D.pid) return;
+ if (!D.moved) { D.src = null; return; } // kısa dokunuş: tıklama işini görsün
+ const t = dTarget(e.clientX, e.clientY);
+ D.skip = Date.now() + 500; // sürüklemenin ardından gelen tıklama yok sayılır
+ dDrop(t); dEnd();
+});
+document.addEventListener('pointercancel', e => { if (D.src && e.pointerId === D.pid) dEnd(); });
+document.addEventListener('click', e => { if (D.skip > Date.now()) { D.skip = 0; e.stopPropagation(); e.preventDefault(); } }, true);
+// sürüklerken sayfa çevirme kütüphanesi fare/dokunma hareketini görmesin, sayfa kaymasın
+['mousemove', 'touchmove'].forEach(t => addEventListener(t, e => { if (D.moved) { e.stopPropagation(); if (t === 'touchmove' && e.cancelable) e.preventDefault(); } }, {capture: true, passive: false}));
 document.fonts?.load('400 20px Arakom', 'أ').then(() => Object.keys(CV).length && $$('.pg-qz').forEach(el => el.innerHTML = qzHTML(+el.dataset.num)));
 function fUndo() {
  const u = F.undo.pop(); if (!u) return;
@@ -1214,6 +1402,13 @@ function applyTheme() {
  document.documentElement.dataset.theme = S.theme;
  $('meta[name="theme-color"]').content = {gece: '#0e1c18', gunduz: '#ece8df', deniz: '#3c7378'}[S.theme];
 }
+function applyBoard() { // akıllı tahta: elle açılır, otomatik algılama yok
+ document.documentElement.classList.toggle('board', S.board);
+ $('#boardBtn')?.setAttribute('aria-pressed', S.board);
+ if (S.pf) build();
+ if (F.open) { if (Q.k) qzTray(); else fLayout(); }
+ if ($('#panel').classList.contains('open')) renderPanel();
+}
 function applyHot() { app.classList.toggle('hide-hot', !S.hot); $('#hotspotBtn').setAttribute('aria-pressed', S.hot); }
 function applyView() {
  const ic = S.single ? 'i-double' : 'i-single';
@@ -1240,6 +1435,8 @@ const ACT = {
  fullscreen: () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.().catch(() => {}),
  practice: el => openPractice(+el.dataset.page),
  'unit-quiz': () => { closePanel(); openUnitQuiz(); },
+ 'unit-next': el => openNextIn(+el.dataset.u),
+ board: () => { S.board = !S.board; store.set('board', S.board); applyBoard(); toast(S.board ? 'Tahta modu açık: yazılar ve düğmeler büyük' : 'Tahta modu kapandı'); },
  'modal-close': () => closeModal(),
  pdf: el => downloadPdf(el.dataset.src),
  'media-open': el => {
@@ -1272,11 +1469,21 @@ const ACT = {
  ftool: el => fTool(el.dataset.ftool),
  fcolor: el => { F.color = el.dataset.c; if (F.tool !== 'pen' && F.tool !== 'marker') F.tool = 'pen'; fTool(F.tool); }
 };
-let downAt = null;
+let downAt = null, exTapAt = 0;
 host.addEventListener('pointerdown', e => { downAt = {x: e.clientX, y: e.clientY}; }, true);
+/* Parmakla dokunuşta sayfa çevirme kütüphanesi touchstart'ı engelliyor (preventDefault), tarayıcı "click" üretmiyor:
+   etkinlik bölgesi dokunmada pointerup ile açılır. Fare yine click ile açar; kalem iki yoldan gelirse bir kez açılır. */
+host.addEventListener('pointerup', e => {
+ if (e.pointerType === 'mouse') return;
+ const ex = e.target.closest('.ex'); if (!ex || e.target.closest('.hs')) return;
+ const moved = downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 8;
+ if (moved || stage.classList.contains('flipping')) return;
+ exTapAt = Date.now(); openFocus(+ex.closest('.pg').dataset.num, +ex.dataset.ex);
+});
 document.addEventListener('click', e => {
  const ex = e.target.closest('#bookHost .ex');
  if (ex && !e.target.closest('.hs')) {
+  if (Date.now() - exTapAt < 700) return; // dokunuşta zaten açıldı
   const moved = downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 8;
   if (!moved && !stage.classList.contains('flipping')) openFocus(+ex.closest('.pg').dataset.num, +ex.dataset.ex);
   return;
@@ -1523,7 +1730,7 @@ async function runOffline(list, missing, haveBytes, box) {
 
 /* ——— açılış ——— */
 function start() {
- applyTheme(); applyHot();
+ applyTheme(); applyHot(); applyBoard();
  $('#soundBtn').setAttribute('aria-pressed', S.sound); $('#soundBtn use').setAttribute('href', S.sound ? '#i-sound' : '#i-mute');
  const hash = /#p=(\d+)/.exec(location.hash), last = store.get('last', FIRST);
  const startNum = clamp(hash ? +hash[1] : last, FIRST, LAST);

@@ -11,3 +11,5 @@ Canlı: https://raufenc.github.io/arapca9-kitap/
 - 21 Storyline etkinliği ortak motoru `assets/activities/_storyline/` altından kullanır.
 - Yazılı etkinlikler (222 etkinlik) etkileşimli: işaretle, doğru/yanlış, şekil, boşluğa kart koy, cümle diz, çizgiyle eşleştir, bulmaca. Cevaplar `cevaplar.js`, cevap anahtarı resimleri `assets/keys/`. Motor `reader.js` içinde `qz*` işlevleri; veri `../arapca9-kaynak/cevap/` altında üretilir (`python3 derle.py x`).
 - Cevaplar `cevaplar.js` içinde açık durur; site herkese açık olduğu için meraklı bir öğrenci bulabilir.
+- Yazılı etkinliklerde (Kasım 2026, paket 2): "Yanlışları tekrar dene" (yalnız kırmızılar silinir), Kontrol et'te kısa yumuşak ses (panelden sessize alınır), bölgesinde kitabın ses karekodu olan 29 etkinlikte doğru çözümden sonra "Dinle", kartları ve bulmaca karelerini parmakla/fareyle sürükle-bırak, İçindekiler panelinde ünite ünite ilerleme özeti.
+- Üst çubuktaki ekran simgesi "tahta modu"nu açar (büyük yazı ve düğmeler, puan sayısı gizli; telefonda gizli). Dokunmatik ekranda sayfadaki etkinlik kutusu artık dokununca açılır (sayfa çevirme kütüphanesi dokunuşta "click" üretmiyordu).
