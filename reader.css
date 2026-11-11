@@ -626,3 +626,8 @@ html.board .panel,html.board .player,html.board .toasts,html.board .tip{zoom:var
 html.board .focus-stage{bottom:calc(76px*var(--u))}
 @media (max-width:760px){html.board{--u:1;--top-h:54px;--dock-h:64px}html.board .panel,html.board .player,html.board .toasts,html.board .tip{zoom:1}}
 html.board .panel .tb{width:40px;height:40px;border-radius:12px}html.board .panel .tb svg{width:20px;height:20px} /* panel zaten bütünüyle büyütülüyor */
+
+/* ders seti bağlantısı */
+.set-link{display:flex;width:auto;gap:8px;padding:0 12px 0 10px;margin-left:6px;color:var(--gold);font-weight:700;font-size:13px;text-decoration:none;background:var(--glass-2);border:1px solid var(--line)}
+.set-link:hover{color:var(--gold-2)}
+@media (max-width:760px){.set-link span{display:none}.set-link{padding:0;width:40px;justify-content:center}}
